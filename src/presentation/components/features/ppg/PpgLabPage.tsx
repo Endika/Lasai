@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/presentation/components/common/Button'
+import { useWakeLock } from '@/presentation/hooks/useWakeLock'
 import { CameraSignalSource } from '@/infrastructure/ppg/CameraSignalSource'
 import type { ISignalSource } from '@/infrastructure/ppg/ISignalSource'
 import {
@@ -33,6 +34,9 @@ export function PpgLabPage({ createSource }: PpgLabPageProps) {
   const [torchSupported, setTorchSupported] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
   const [analysis, setAnalysis] = useState<WindowAnalysis | null>(null)
+
+  // Keep the screen awake while measuring so it doesn't lock mid-reading.
+  useWakeLock(running)
 
   const sourceRef = useRef<ISignalSource | null>(null)
   const bufferRef = useRef<number[]>([])
