@@ -1,0 +1,123 @@
+{
+  "app": {
+    "name": "Lasai",
+    "tagline": "Un espacio tranquilo y sin conexión para respirar y aliviar el estrés."
+  },
+  "nav": {
+    "home": "Inicio",
+    "back": "Atrás",
+    "checkIn": "Chequeo",
+    "history": "Historial"
+  },
+  "home": {
+    "tagline": "Dedícate unos minutos de calma.",
+    "calmNow": "Calma ya",
+    "calmNowHint": "Inicia una sesión de respiración guiada",
+    "checkIn": "Chequeo de estrés",
+    "checkInHint": "Una breve reflexión privada",
+    "history": "Tu historial",
+    "historyHint": "Sesiones y chequeos a lo largo del tiempo"
+  },
+  "calm": {
+    "title": "Sesión de calma",
+    "start": "Empezar",
+    "stop": "Terminar",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "pattern": "Patrón de respiración",
+    "duration": "Duración",
+    "minutes": "{{count}} min",
+    "patternBox": "Respiración en caja",
+    "patternBoxHint": "4–4–4–4, constante y regular",
+    "patternFourSevenEight": "Respiración 4-7-8",
+    "patternFourSevenEightHint": "Exhalación más larga, relajante",
+    "phaseInhale": "Inhala",
+    "phaseHold": "Mantén",
+    "phaseExhale": "Exhala",
+    "phaseRest": "Descansa",
+    "sound": "Sonido ambiente",
+    "soundOn": "Sonido ambiente activado",
+    "soundOff": "Sonido ambiente desactivado",
+    "timeLeft": "Tiempo restante",
+    "readyTitle": "Cuando quieras",
+    "readyBody": "Sigue el círculo. Deja que tu respiración acompañe su ritmo.",
+    "doneTitle": "Bien hecho",
+    "doneBody": "Te has dedicado un momento.",
+    "doneAgain": "Respirar de nuevo",
+    "doneHome": "Volver al inicio"
+  },
+  "checkIn": {
+    "title": "Chequeo de estrés",
+    "intro": "Durante el último mes, ¿con qué frecuencia te has sentido así? No hay respuestas correctas.",
+    "submit": "Ver mi reflexión",
+    "of": "Pregunta {{current}} de {{total}}",
+    "journalLabel": "¿Algo que te ronda la cabeza? (opcional)",
+    "journalPlaceholder": "Una nota solo para ti…",
+    "incomplete": "Tómate tu tiempo: aún quedan algunas preguntas.",
+    "options": {
+      "0": "Nunca",
+      "1": "Casi nunca",
+      "2": "A veces",
+      "3": "A menudo",
+      "4": "Muy a menudo"
+    },
+    "items": {
+      "q1": "En el último mes, ¿con qué frecuencia te has sentido alterada o alterado por algo que ocurrió de forma inesperada?",
+      "q2": "En el último mes, ¿con qué frecuencia has sentido que no podías controlar las cosas importantes de tu vida?",
+      "q3": "En el último mes, ¿con qué frecuencia te has sentido nerviosa o nervioso y con estrés?",
+      "q4": "En el último mes, ¿con qué frecuencia te has sentido con confianza en tu capacidad para manejar tus problemas personales?",
+      "q5": "En el último mes, ¿con qué frecuencia has sentido que las cosas te iban bien?",
+      "q6": "En el último mes, ¿con qué frecuencia has notado que no podías con todo lo que tenías que hacer?",
+      "q7": "En el último mes, ¿con qué frecuencia has podido controlar las irritaciones de tu vida?",
+      "q8": "En el último mes, ¿con qué frecuencia has sentido que tenías todo bajo control?",
+      "q9": "En el último mes, ¿con qué frecuencia te has enfadado por cosas que ocurrieron y que estaban fuera de tu control?",
+      "q10": "En el último mes, ¿con qué frecuencia has sentido que las dificultades se acumulaban tanto que no podías superarlas?"
+    },
+    "result": {
+      "title": "Tu reflexión",
+      "scoreLabel": "Estrés percibido",
+      "scoreValue": "{{score}} de 40",
+      "bandLow": "Estrés más bajo ahora mismo",
+      "bandModerate": "Estrés moderado ahora mismo",
+      "bandHigh": "Estrés más alto ahora mismo",
+      "bodyLow": "Las cosas se sienten bastante llevaderas por ahora. Una breve pausa de respiración ayuda a mantenerlo así.",
+      "bodyModerate": "Hay algo de presión en la mezcla. Unos minutos de respiración tranquila podrían aliviarte.",
+      "bodyHigh": "Parece que cargas con bastante. Sé amable contigo: una pausa de respiración tranquila es un buen paso.",
+      "breathe": "Hacer una pausa de calma",
+      "done": "Listo",
+      "attribution": "Escala de Estrés Percibido, Cohen et al.",
+      "disclaimer": "Esto es para la autorreflexión, no es un diagnóstico."
+    }
+  },
+  "history": {
+    "title": "Tu historial",
+    "trendTitle": "Estrés percibido a lo largo del tiempo",
+    "trendAria": "Gráfico de líneas de tu nivel de estrés percibido a lo largo del tiempo",
+    "checkInsTitle": "Chequeos",
+    "sessionsTitle": "Sesiones de calma",
+    "score": "{{score}} de 40",
+    "sessionLine": "{{pattern}} · {{minutes}} min",
+    "emptyTitle": "Aún no hay nada aquí",
+    "emptyBody": "Tus sesiones de calma y chequeos se irán reuniendo aquí poco a poco.",
+    "emptyTrend": "Completa un par de chequeos para ver tu evolución.",
+    "deleteAll": "Borrar todos mis datos",
+    "deleteConfirmTitle": "¿Borrar todo?",
+    "deleteConfirmBody": "Esto elimina de forma permanente todos tus chequeos, notas y sesiones de este dispositivo. No se puede deshacer.",
+    "deleteConfirm": "Sí, borrarlo todo",
+    "deleteCancel": "Conservar mis datos"
+  },
+  "band": {
+    "low": "Más bajo",
+    "moderate": "Moderado",
+    "high": "Más alto"
+  },
+  "privacy": {
+    "link": "Privacidad",
+    "title": "Tu privacidad",
+    "body": "Todo se queda en tu dispositivo. Lasai no tiene cuenta ni servidor, y no recopila nada.",
+    "note": "Todo se queda en tu dispositivo. Lasai no tiene cuenta ni servidor, y no recopila nada."
+  },
+  "common": {
+    "close": "Cerrar"
+  }
+}

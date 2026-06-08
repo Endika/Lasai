@@ -1,0 +1,126 @@
+@import 'tailwindcss';
+
+/*
+  Lasai design system — calm, organic minimalism.
+  Soft teal brand, warm-neutral ink, generous air, slow gentle motion.
+  Semantic stress bands: low = calm green, moderate = warm amber, high = soft clay.
+  These band colours are NEVER alarming red — copy + colour stay gentle.
+*/
+@theme {
+  /* Brand */
+  --color-calm: #3fb8af;
+  --color-calm-deep: #2c8c85;
+  --color-calm-soft: #eaf6f5;
+  --color-calm-mist: #f4faf9;
+
+  /* Ink (warm neutral, not pure black) */
+  --color-ink: #1f2d2c;
+  --color-ink-soft: #46605d;
+  --color-ink-faint: #7d938f;
+
+  /* Surface */
+  --color-surface: #ffffff;
+  --color-surface-veil: #ffffffd9;
+
+  /* Semantic stress bands (gentle, never red) */
+  --color-band-low: #5bbf8f;
+  --color-band-low-soft: #e7f5ee;
+  --color-band-moderate: #d8a85a;
+  --color-band-moderate-soft: #f8f0df;
+  --color-band-high: #c98b76;
+  --color-band-high-soft: #f6ebe6;
+
+  --font-body: ui-rounded, 'Hiragino Maru Gothic ProN', 'Segoe UI', system-ui, sans-serif;
+
+  --radius-petal: 2rem;
+}
+
+:root {
+  color-scheme: light;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body {
+  /* Keep the browser pull-to-refresh from wiping in-progress session state. */
+  overscroll-behavior-y: contain;
+}
+
+body {
+  /* A barely-there vertical gradient gives depth without busyness. */
+  background-color: #eaf6f5;
+  background-image: linear-gradient(180deg, #f4faf9 0%, #eaf6f5 60%, #e2f1ef 100%);
+  background-attachment: fixed;
+  color: #1f2d2c;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Soft focus ring, calm not jarring. */
+:focus-visible {
+  outline: 2px solid var(--color-calm-deep);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* ---- Breathing pacer animation ---- */
+@keyframes breathe-in {
+  from {
+    transform: scale(0.55);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes breathe-out {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.55);
+  }
+}
+@keyframes halo-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.06);
+  }
+}
+@keyframes gentle-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-gentle-rise {
+  animation: gentle-rise 0.6s ease-out both;
+}
+
+/* Respect users who prefer less motion: no scaling/pulsing, snap to a calm rest state. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

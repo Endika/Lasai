@@ -1,0 +1,19 @@
+import type { CheckIn } from '@/domain/entities/CheckIn'
+import type { JournalEntry } from '@/domain/entities/JournalEntry'
+import type { CalmSession } from '@/domain/entities/CalmSession'
+
+/**
+ * The single port for persisting wellbeing data. Everything stays on the
+ * device (localStorage for M1); the interface is async so an IndexedDB or
+ * other backend can replace it without touching the application layer.
+ */
+export interface IEntryRepository {
+  addCheckIn(checkIn: CheckIn): Promise<void>
+  listCheckIns(): Promise<CheckIn[]>
+  addJournal(entry: JournalEntry): Promise<void>
+  listJournal(): Promise<JournalEntry[]>
+  addSession(session: CalmSession): Promise<void>
+  listSessions(): Promise<CalmSession[]>
+  /** Erasure: wipe everything we stored. */
+  deleteAll(): Promise<void>
+}

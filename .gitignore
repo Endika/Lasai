@@ -1,0 +1,24 @@
+node_modules
+dist
+dist-ssr
+coverage
+
+.env
+.env.*.local
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.vite
+.cache
+
+.DS_Store
+Thumbs.db
+
+*.local
+
+# Internal planning notes (specs/plans) live outside the repo (../Lasai-notes)
+docs/superpowers/

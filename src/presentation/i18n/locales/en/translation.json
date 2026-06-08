@@ -1,0 +1,123 @@
+{
+  "app": {
+    "name": "Lasai",
+    "tagline": "A calm, offline space to breathe and ease stress."
+  },
+  "nav": {
+    "home": "Home",
+    "back": "Back",
+    "checkIn": "Check-in",
+    "history": "History"
+  },
+  "home": {
+    "tagline": "Take a few quiet minutes for yourself.",
+    "calmNow": "Calm now",
+    "calmNowHint": "Start a guided breathing session",
+    "checkIn": "Stress check-in",
+    "checkInHint": "A short, private self-reflection",
+    "history": "Your history",
+    "historyHint": "Sessions and check-ins over time"
+  },
+  "calm": {
+    "title": "Calm session",
+    "start": "Begin",
+    "stop": "Finish",
+    "pause": "Pause",
+    "resume": "Resume",
+    "pattern": "Breathing pattern",
+    "duration": "Duration",
+    "minutes": "{{count}} min",
+    "patternBox": "Box breathing",
+    "patternBoxHint": "4–4–4–4, steady and even",
+    "patternFourSevenEight": "4-7-8 breathing",
+    "patternFourSevenEightHint": "Longer exhale, settling",
+    "phaseInhale": "Breathe in",
+    "phaseHold": "Hold",
+    "phaseExhale": "Breathe out",
+    "phaseRest": "Rest",
+    "sound": "Ambient sound",
+    "soundOn": "Ambient sound on",
+    "soundOff": "Ambient sound off",
+    "timeLeft": "Time remaining",
+    "readyTitle": "When you're ready",
+    "readyBody": "Follow the circle. Let your breath match its rhythm.",
+    "doneTitle": "Well done",
+    "doneBody": "You took a moment for yourself.",
+    "doneAgain": "Breathe again",
+    "doneHome": "Back home"
+  },
+  "checkIn": {
+    "title": "Stress check-in",
+    "intro": "Over the last month, how often have you felt this way? There are no right answers.",
+    "submit": "See my reflection",
+    "of": "Question {{current}} of {{total}}",
+    "journalLabel": "Anything on your mind? (optional)",
+    "journalPlaceholder": "A note just for you…",
+    "incomplete": "Take your time — a few questions are still open.",
+    "options": {
+      "0": "Never",
+      "1": "Almost never",
+      "2": "Sometimes",
+      "3": "Fairly often",
+      "4": "Very often"
+    },
+    "items": {
+      "q1": "In the last month, how often have you been upset because of something that happened unexpectedly?",
+      "q2": "In the last month, how often have you felt that you were unable to control the important things in your life?",
+      "q3": "In the last month, how often have you felt nervous and stressed?",
+      "q4": "In the last month, how often have you felt confident about your ability to handle your personal problems?",
+      "q5": "In the last month, how often have you felt that things were going your way?",
+      "q6": "In the last month, how often have you found that you could not cope with all the things that you had to do?",
+      "q7": "In the last month, how often have you been able to control irritations in your life?",
+      "q8": "In the last month, how often have you felt that you were on top of things?",
+      "q9": "In the last month, how often have you been angered because of things that happened that were outside of your control?",
+      "q10": "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?"
+    },
+    "result": {
+      "title": "Your reflection",
+      "scoreLabel": "Perceived stress",
+      "scoreValue": "{{score}} of 40",
+      "bandLow": "Lower stress right now",
+      "bandModerate": "Moderate stress right now",
+      "bandHigh": "Higher stress right now",
+      "bodyLow": "Things feel fairly manageable at the moment. A short breathing pause can help keep it that way.",
+      "bodyModerate": "There's some pressure in the mix. A few quiet minutes of breathing might bring some ease.",
+      "bodyHigh": "It sounds like a lot is weighing on you. Be gentle with yourself — a calm breathing pause is a kind next step.",
+      "breathe": "Take a calm pause",
+      "done": "Done",
+      "attribution": "Perceived Stress Scale, Cohen et al.",
+      "disclaimer": "This is for self-reflection, not a diagnosis."
+    }
+  },
+  "history": {
+    "title": "Your history",
+    "trendTitle": "Perceived stress over time",
+    "trendAria": "Line chart of your perceived-stress score over time",
+    "checkInsTitle": "Check-ins",
+    "sessionsTitle": "Calm sessions",
+    "score": "{{score}} of 40",
+    "sessionLine": "{{pattern}} · {{minutes}} min",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Your calm sessions and check-ins will gently gather here.",
+    "emptyTrend": "Complete a couple of check-ins to see your trend.",
+    "deleteAll": "Delete all my data",
+    "deleteConfirmTitle": "Delete everything?",
+    "deleteConfirmBody": "This permanently removes all your check-ins, notes and sessions from this device. It can't be undone.",
+    "deleteConfirm": "Yes, delete it all",
+    "deleteCancel": "Keep my data"
+  },
+  "band": {
+    "low": "Lower",
+    "moderate": "Moderate",
+    "high": "Higher"
+  },
+  "privacy": {
+    "link": "Privacy",
+    "title": "Your privacy",
+    "body": "Everything stays on your device. Lasai has no account, no server, and collects nothing.",
+    "note": "Everything stays on your device. Lasai has no account, no server, and collects nothing."
+  },
+  "common": {
+    "close": "Close"
+  }
+}
