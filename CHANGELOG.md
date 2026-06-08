@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/Endika/Lasai/compare/v0.5.1...v0.6.0) (2026-06-08)
+
+
+### Features
+
+* **motion:** chest-sensor lab (experimental, hidden route) ([0a56529](https://github.com/Endika/Lasai/commit/0a56529b84be34ce264fb59f178d4908a27f99ee))
+
 ## [0.5.1](https://github.com/Endika/Lasai/compare/v0.5.0...v0.5.1) (2026-06-08)
 
 
