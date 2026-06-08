@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/Endika/Lasai/compare/v0.5.0...v0.5.1) (2026-06-08)
+
+
+### Bug Fixes
+
+* **ppg:** turn on the flash during measurement ([564dd6c](https://github.com/Endika/Lasai/commit/564dd6c8239a42bb44d1caf70d5247ba41f8615e))
+
 ## [0.5.0](https://github.com/Endika/Lasai/compare/v0.4.0...v0.5.0) (2026-06-08)
 
 
