@@ -9,12 +9,21 @@ import { CheckInPage } from '@/presentation/components/features/checkin/CheckInP
 import { HistoryPage } from '@/presentation/components/features/history/HistoryPage'
 import { MeasurePage } from '@/presentation/components/features/measure/MeasurePage'
 import { PpgLabPage } from '@/presentation/components/features/ppg/PpgLabPage'
+import { MotionLabPage } from '@/presentation/components/features/motion/MotionLabPage'
 
-// 'ppg-lab' is a hidden diagnostic route reachable only via ?view=ppg-lab.
-// It is intentionally NOT linked from Home or any menu (experimental SPIKE).
-type View = 'home' | 'calm' | 'checkin' | 'history' | 'measure' | 'ppg-lab'
+// 'ppg-lab' and 'motion-lab' are hidden diagnostic routes reachable only via
+// ?view=…; both are intentionally NOT linked from Home or any menu (SPIKEs).
+type View = 'home' | 'calm' | 'checkin' | 'history' | 'measure' | 'ppg-lab' | 'motion-lab'
 
-const VIEWS: readonly View[] = ['home', 'calm', 'checkin', 'history', 'measure', 'ppg-lab']
+const VIEWS: readonly View[] = [
+  'home',
+  'calm',
+  'checkin',
+  'history',
+  'measure',
+  'ppg-lab',
+  'motion-lab',
+]
 
 function readView(): View {
   const v = new URL(window.location.href).searchParams.get('view')
@@ -73,6 +82,7 @@ export default function App() {
         {view === 'history' && <HistoryPage />}
         {view === 'measure' && <MeasurePage onCheckIn={() => go('checkin')} onDone={goHome} />}
         {view === 'ppg-lab' && <PpgLabPage />}
+        {view === 'motion-lab' && <MotionLabPage />}
 
         <Footer />
       </div>
