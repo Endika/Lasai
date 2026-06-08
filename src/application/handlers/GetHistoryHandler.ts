@@ -1,5 +1,6 @@
 import type { CheckIn } from '@/domain/entities/CheckIn'
 import type { CalmSession } from '@/domain/entities/CalmSession'
+import type { HeartReading } from '@/domain/entities/HeartReading'
 import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 
 /** One point of the PSS trend chart: a calendar date and that day's score. */
@@ -13,6 +14,8 @@ export interface HistoryResult {
   checkIns: CheckIn[]
   /** Calm sessions, newest first. */
   sessions: CalmSession[]
+  /** Camera-PPG heart readings, newest first. */
+  readings: HeartReading[]
   /** PSS scores over time, oldest -> newest, for a line/sparkline chart. */
   trend: TrendPoint[]
 }
@@ -26,19 +29,26 @@ export class GetHistoryHandler {
   constructor(private readonly repo: IEntryRepository) {}
 
   async execute(): Promise<HistoryResult> {
-    const [checkIns, sessions] = await Promise.all([
+    const [checkIns, sessions, readings] = await Promise.all([
       this.repo.listCheckIns(),
       this.repo.listSessions(),
+      this.repo.listReadings(),
     ])
 
     const sortedCheckIns = [...checkIns].sort(byCreatedAtDesc)
     const sortedSessions = [...sessions].sort(byCreatedAtDesc)
+    const sortedReadings = [...readings].sort(byCreatedAtDesc)
 
     // Trend is oldest -> newest so a chart reads left to right.
     const trend: TrendPoint[] = [...checkIns]
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
       .map((c) => ({ date: c.createdAt.slice(0, 10), score: c.score }))
 
-    return { checkIns: sortedCheckIns, sessions: sortedSessions, trend }
+    return {
+      checkIns: sortedCheckIns,
+      sessions: sortedSessions,
+      readings: sortedReadings,
+      trend,
+    }
   }
 }

@@ -3,6 +3,7 @@ import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEn
 import { ENTRY_LIST_CAP } from '@/infrastructure/persistence/LocalStorageEntryRepository'
 import { createCheckIn } from '@/domain/entities/CheckIn'
 import { createCalmSession } from '@/domain/entities/CalmSession'
+import { createHeartReading } from '@/domain/entities/HeartReading'
 
 const ANSWERS = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
 
@@ -16,13 +17,33 @@ describe('InMemoryEntryRepository', () => {
     expect((await repo.listCheckIns())[0]?.score).toBe(c.score)
   })
 
+  it('round-trips a heart reading and isolates stored data', async () => {
+    const repo = new InMemoryEntryRepository()
+    const reading = createHeartReading({
+      bpm: 68,
+      rmssd: 42,
+      stressBand: 'moderate',
+      quality: 'good',
+    })
+    await repo.addReading(reading)
+    const listed = await repo.listReadings()
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.bpm).toBe(68)
+    expect(listed[0]?.rmssd).toBe(42)
+    expect(listed[0]?.stressBand).toBe('moderate')
+    listed[0]!.bpm = 999 // mutating the returned copy must not affect storage
+    expect((await repo.listReadings())[0]?.bpm).toBe(68)
+  })
+
   it('deleteAll wipes every list', async () => {
     const repo = new InMemoryEntryRepository()
     await repo.addCheckIn(createCheckIn({ answers: ANSWERS }))
     await repo.addSession(createCalmSession({ pattern: 'box', durationSec: 60 }))
+    await repo.addReading(createHeartReading({ bpm: 70, quality: 'fair' }))
     await repo.deleteAll()
     expect(await repo.listCheckIns()).toEqual([])
     expect(await repo.listSessions()).toEqual([])
+    expect(await repo.listReadings()).toEqual([])
   })
 
   it('enforces the same newest-N cap as the local repo', async () => {

@@ -7,13 +7,14 @@ import { HomePage } from '@/presentation/components/features/home/HomePage'
 import { CalmSession } from '@/presentation/components/features/calm/CalmSession'
 import { CheckInPage } from '@/presentation/components/features/checkin/CheckInPage'
 import { HistoryPage } from '@/presentation/components/features/history/HistoryPage'
+import { MeasurePage } from '@/presentation/components/features/measure/MeasurePage'
 import { PpgLabPage } from '@/presentation/components/features/ppg/PpgLabPage'
 
 // 'ppg-lab' is a hidden diagnostic route reachable only via ?view=ppg-lab.
 // It is intentionally NOT linked from Home or any menu (experimental SPIKE).
-type View = 'home' | 'calm' | 'checkin' | 'history' | 'ppg-lab'
+type View = 'home' | 'calm' | 'checkin' | 'history' | 'measure' | 'ppg-lab'
 
-const VIEWS: readonly View[] = ['home', 'calm', 'checkin', 'history', 'ppg-lab']
+const VIEWS: readonly View[] = ['home', 'calm', 'checkin', 'history', 'measure', 'ppg-lab']
 
 function readView(): View {
   const v = new URL(window.location.href).searchParams.get('view')
@@ -62,6 +63,7 @@ export default function App() {
             onCalm={() => go('calm')}
             onCheckIn={() => go('checkin')}
             onHistory={() => go('history')}
+            onMeasure={() => go('measure')}
           />
         )}
         {view === 'calm' && <CalmSession onHome={goHome} />}
@@ -69,6 +71,7 @@ export default function App() {
           <CheckInPage onCalm={() => go('calm')} onDone={() => go('history')} />
         )}
         {view === 'history' && <HistoryPage />}
+        {view === 'measure' && <MeasurePage onCheckIn={() => go('checkin')} onDone={goHome} />}
         {view === 'ppg-lab' && <PpgLabPage />}
 
         <Footer />

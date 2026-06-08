@@ -1,6 +1,7 @@
 import type { CheckIn } from '@/domain/entities/CheckIn'
 import type { JournalEntry } from '@/domain/entities/JournalEntry'
 import type { CalmSession } from '@/domain/entities/CalmSession'
+import type { HeartReading } from '@/domain/entities/HeartReading'
 
 /**
  * The single port for persisting wellbeing data. Everything stays on the
@@ -14,6 +15,8 @@ export interface IEntryRepository {
   listJournal(): Promise<JournalEntry[]>
   addSession(session: CalmSession): Promise<void>
   listSessions(): Promise<CalmSession[]>
+  addReading(reading: HeartReading): Promise<void>
+  listReadings(): Promise<HeartReading[]>
   /** Erasure: wipe everything we stored. */
   deleteAll(): Promise<void>
 }

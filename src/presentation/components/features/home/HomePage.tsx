@@ -5,9 +5,10 @@ interface HomePageProps {
   onCalm: () => void
   onCheckIn: () => void
   onHistory: () => void
+  onMeasure: () => void
 }
 
-export function HomePage({ onCalm, onCheckIn, onHistory }: HomePageProps) {
+export function HomePage({ onCalm, onCheckIn, onHistory, onMeasure }: HomePageProps) {
   const { t } = useTranslation()
 
   return (
@@ -46,6 +47,12 @@ export function HomePage({ onCalm, onCheckIn, onHistory }: HomePageProps) {
           onClick={onCheckIn}
         />
         <SecondaryEntry
+          title={t('home.measure')}
+          hint={t('home.measureHint')}
+          onClick={onMeasure}
+          badge={t('measure.experimental')}
+        />
+        <SecondaryEntry
           title={t('home.history')}
           hint={t('home.historyHint')}
           onClick={onHistory}
@@ -59,10 +66,12 @@ function SecondaryEntry({
   title,
   hint,
   onClick,
+  badge,
 }: {
   title: string
   hint: string
   onClick: () => void
+  badge?: string
 }) {
   return (
     <button
@@ -70,7 +79,14 @@ function SecondaryEntry({
       onClick={onClick}
       className="flex flex-col items-start rounded-[1.5rem] border border-calm/15 bg-surface/70 px-5 py-4 text-left shadow-[0_4px_16px_-12px_rgba(44,140,133,0.5)] transition-all hover:-translate-y-0.5 hover:border-calm/35 hover:bg-surface active:translate-y-0"
     >
-      <span className="text-base font-semibold text-ink">{title}</span>
+      <span className="flex items-center gap-2">
+        <span className="text-base font-semibold text-ink">{title}</span>
+        {badge && (
+          <span className="rounded-full bg-calm-soft px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-calm-deep">
+            {badge}
+          </span>
+        )}
+      </span>
       <span className="text-sm text-ink-faint">{hint}</span>
     </button>
   )

@@ -286,3 +286,185 @@ export function analyzeWindow(samples: number[], fps: number): WindowAnalysis {
     peaks,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Artifact rejection + a sustained-capture verdict (the real feature, F1).
+//
+// Live HRV jumps frame to frame, so the real Measure flow captures a long
+// window and computes ONE averaged, artifact-rejected verdict at the end. The
+// pieces below turn a raw IBI series into clean beats, a robust RMSSD over
+// those, and an honest reliability verdict that gates whether a stress (HRV)
+// estimate is shown at all — we never invent a number from a noisy reading.
+// ---------------------------------------------------------------------------
+
+/** Physiological IBI bounds (ms). 300 ms ≈ 200 bpm, 1500 ms ≈ 40 bpm. */
+export const MIN_IBI_MS = 300
+export const MAX_IBI_MS = 1500
+
+/** An IBI deviating more than this fraction from the running median is dropped. */
+export const IBI_OUTLIER_TOLERANCE = 0.25
+
+/** Sustained-capture targets for a trustworthy HRV estimate. */
+export const HRV_MIN_DURATION_SEC = 45
+export const HRV_MIN_CLEAN_BEAT_RATIO = 0.7
+export const HRV_MIN_CLEAN_BEATS = 30
+
+/** Median of a numeric array (does not mutate the input). Empty -> NaN. */
+function median(values: number[]): number {
+  if (values.length === 0) return NaN
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2
+    : (sorted[mid] ?? 0)
+}
+
+/**
+ * Drop physiologically impossible and motion/ectopic IBIs.
+ *
+ *  1. Anything outside [MIN_IBI_MS, MAX_IBI_MS] is impossible (finger slipped,
+ *     a doubled or missed beat) and removed outright.
+ *  2. Of what remains, an interval deviating more than IBI_OUTLIER_TOLERANCE
+ *     from the running median of the kept beats is an artifact (motion spike or
+ *     ectopic beat) and removed. A running median (rather than a global one)
+ *     tracks a gradually drifting heart rate without flagging the whole tail.
+ */
+export function cleanIbis(ibisMs: number[]): number[] {
+  const inRange = ibisMs.filter((x) => x >= MIN_IBI_MS && x <= MAX_IBI_MS)
+  if (inRange.length === 0) return []
+
+  const kept: number[] = []
+  for (const x of inRange) {
+    const ref = kept.length > 0 ? median(kept) : x
+    if (ref <= 0) {
+      kept.push(x)
+      continue
+    }
+    if (Math.abs(x - ref) / ref <= IBI_OUTLIER_TOLERANCE) kept.push(x)
+  }
+  // Seed the running median with the first value, so the very first interval is
+  // never rejected against itself; the loop above already keeps it.
+  return kept
+}
+
+/**
+ * RMSSD over only *consecutive* clean pairs.
+ *
+ * After artifact rejection the series may have gaps (a removed beat breaks the
+ * chain). Differencing across a gap would invent a huge spurious successive
+ * difference, so we difference clean adjacent intervals only. With the running
+ * cleaner above the kept series is already contiguous, so this reduces to the
+ * standard RMSSD; it is kept explicit so the intent (consecutive pairs only) is
+ * clear. Returns null when there are too few clean beats.
+ */
+export function rmssdRobust(cleanIbisMs: number[]): number | null {
+  if (cleanIbisMs.length < 2) return null
+  let sumSq = 0
+  let pairs = 0
+  for (let i = 1; i < cleanIbisMs.length; i++) {
+    const d = (cleanIbisMs[i] ?? 0) - (cleanIbisMs[i - 1] ?? 0)
+    sumSq += d * d
+    pairs++
+  }
+  if (pairs === 0) return null
+  return Math.sqrt(sumSq / pairs)
+}
+
+export type ReadingQuality = 'good' | 'fair' | 'poor'
+
+export interface HeartReadingAssessment {
+  /** Estimated heart rate (bpm), rounded. NaN if the window was unusable. */
+  bpm: number
+  /** Robust RMSSD (ms) over clean beats, or null when not computable. */
+  rmssd: number | null
+  /** Coarse quality verdict from the signal-quality score. */
+  quality: ReadingQuality
+  /**
+   * Whether the HRV/stress estimate is trustworthy enough to show. Gated on
+   * duration AND quality AND a high clean-beat ratio AND enough clean beats —
+   * if any fails we show heart rate only and never fake a stress number.
+   */
+  hrvReliable: boolean
+  /** Fraction of detected beats that survived artifact rejection (0..1). */
+  cleanBeatRatio: number
+  /** Captured duration in seconds (sample count / fps). */
+  durationSec: number
+}
+
+function qualityBand(score: number): ReadingQuality {
+  if (score >= 0.7) return 'good'
+  if (score >= QUALITY_PASS_THRESHOLD) return 'fair'
+  return 'poor'
+}
+
+/**
+ * Assess a full sustained capture into one averaged, artifact-rejected verdict.
+ *
+ * Heart rate uses the existing robust autocorrelation method over the whole
+ * clean window (stable even when HRV is too noisy to trust). HRV is computed
+ * from artifact-rejected IBIs and only reported as reliable when the capture
+ * was long enough, clean enough, and kept enough beats.
+ */
+export function assessReading(samples: number[], fps: number): HeartReadingAssessment {
+  const durationSec = samples.length / fps
+  const quality = signalQuality(samples, fps)
+
+  const rawIbis = peaksToIbisMs(detectPeaks(samples, fps), fps)
+  const clean = cleanIbis(rawIbis)
+  const cleanBeatRatio = rawIbis.length > 0 ? clean.length / rawIbis.length : 0
+  const robust = rmssdRobust(clean)
+
+  const bpmRaw = estimateBpm(samples, fps)
+  const bpm = Number.isFinite(bpmRaw) ? Math.round(bpmRaw) : NaN
+
+  const hrvReliable =
+    durationSec >= HRV_MIN_DURATION_SEC &&
+    quality >= QUALITY_PASS_THRESHOLD &&
+    cleanBeatRatio >= HRV_MIN_CLEAN_BEAT_RATIO &&
+    clean.length >= HRV_MIN_CLEAN_BEATS &&
+    robust !== null
+
+  return {
+    bpm,
+    rmssd: robust,
+    quality: qualityBand(quality),
+    hrvReliable,
+    cleanBeatRatio,
+    durationSec,
+  }
+}
+
+export type StressBand = 'low' | 'moderate' | 'high'
+
+/** Coarse absolute RMSSD cut-offs (ms) used when there is no personal history. */
+export const RMSSD_ABS_HIGH_STRESS = 20
+export const RMSSD_ABS_LOW_STRESS = 50
+
+/**
+ * Map an RMSSD to a coarse stress band.
+ *
+ * The physiology: higher HRV (RMSSD) reflects more parasympathetic ("rest and
+ * digest") activity, so *lower* RMSSD ≈ more stress/arousal. This is a rough,
+ * non-clinical estimate, not a diagnosis.
+ *
+ *  - With ≥5 prior RMSSD values, band the reading relative to the user's OWN
+ *    distribution via tertiles: bottom third (low RMSSD) -> high stress, top
+ *    third -> low stress. Personal baselines vary widely, so self-relative is
+ *    far more meaningful than absolute cut-offs.
+ *  - Otherwise fall back to coarse absolute bands: <20 ms -> high, 20–50 ->
+ *    moderate, >50 -> low.
+ */
+export function stressBandFromRmssd(rmssdMs: number, history?: number[]): StressBand {
+  const prior = (history ?? []).filter((v) => Number.isFinite(v) && v > 0)
+  if (prior.length >= 5) {
+    const sorted = [...prior].sort((a, b) => a - b)
+    const lowerTertile = sorted[Math.floor(sorted.length / 3)] ?? 0
+    const upperTertile = sorted[Math.floor((2 * sorted.length) / 3)] ?? 0
+    if (rmssdMs <= lowerTertile) return 'high'
+    if (rmssdMs >= upperTertile) return 'low'
+    return 'moderate'
+  }
+  if (rmssdMs < RMSSD_ABS_HIGH_STRESS) return 'high'
+  if (rmssdMs <= RMSSD_ABS_LOW_STRESS) return 'moderate'
+  return 'low'
+}

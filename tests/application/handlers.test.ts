@@ -3,6 +3,7 @@ import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEn
 import { SubmitCheckInHandler } from '@/application/handlers/SubmitCheckInHandler'
 import { AddJournalEntryHandler } from '@/application/handlers/AddJournalEntryHandler'
 import { LogCalmSessionHandler } from '@/application/handlers/LogCalmSessionHandler'
+import { SaveHeartReadingHandler } from '@/application/handlers/SaveHeartReadingHandler'
 import { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
 import { DeleteAllDataHandler } from '@/application/handlers/DeleteAllDataHandler'
 
@@ -81,6 +82,49 @@ describe('LogCalmSessionHandler', () => {
   })
 })
 
+describe('SaveHeartReadingHandler', () => {
+  it('stores heart rate only when no reliable rmssd is supplied (no faked band)', async () => {
+    const repo = new InMemoryEntryRepository()
+    const reading = await new SaveHeartReadingHandler(repo).execute({
+      bpm: 72,
+      rmssd: null,
+      quality: 'fair',
+    })
+    expect(reading.bpm).toBe(72)
+    expect(reading.rmssd).toBeNull()
+    expect(reading.stressBand).toBeNull()
+    expect((await repo.listReadings())[0]?.id).toBe(reading.id)
+  })
+
+  it('derives a stress band from rmssd via coarse absolute bands for a new user', async () => {
+    const repo = new InMemoryEntryRepository()
+    const reading = await new SaveHeartReadingHandler(repo).execute({
+      bpm: 64,
+      rmssd: 12, // low HRV -> high stress, no history yet
+      quality: 'good',
+    })
+    expect(reading.stressBand).toBe('high')
+  })
+
+  it('bands relative to the user own rmssd history once enough readings exist', async () => {
+    const repo = new InMemoryEntryRepository()
+    const handler = new SaveHeartReadingHandler(repo)
+    for (const r of [20, 30, 40, 50, 60]) {
+      await handler.execute({ bpm: 65, rmssd: r, quality: 'good' })
+    }
+    // 22 ms is in this user's bottom tertile -> high, even though 22 > absolute 20.
+    const reading = await handler.execute({ bpm: 66, rmssd: 22, quality: 'good' })
+    expect(reading.stressBand).toBe('high')
+  })
+
+  it('rejects an implausible bpm', async () => {
+    const repo = new InMemoryEntryRepository()
+    await expect(
+      new SaveHeartReadingHandler(repo).execute({ bpm: 5, quality: 'good' }),
+    ).rejects.toBeTruthy()
+  })
+})
+
 describe('GetHistoryHandler', () => {
   it('returns check-ins + sessions newest-first and a chronological trend', async () => {
     const repo = new InMemoryEntryRepository()
@@ -92,6 +136,12 @@ describe('GetHistoryHandler', () => {
       durationSec: 60,
       now: '2026-06-02T08:00:00.000Z',
     })
+    await new SaveHeartReadingHandler(repo).execute({
+      bpm: 70,
+      rmssd: 45,
+      quality: 'good',
+      now: '2026-06-02T09:00:00.000Z',
+    })
 
     const history = await new GetHistoryHandler(repo).execute()
 
@@ -100,6 +150,8 @@ describe('GetHistoryHandler', () => {
       '2026-06-01T08:00:00.000Z',
     ])
     expect(history.sessions).toHaveLength(1)
+    expect(history.readings).toHaveLength(1)
+    expect(history.readings[0]?.bpm).toBe(70)
     // Trend is oldest -> newest, one point per check-in, with the date only.
     expect(history.trend).toEqual([
       { date: '2026-06-01', score: 24 },
@@ -109,7 +161,7 @@ describe('GetHistoryHandler', () => {
 
   it('returns empty structures when nothing is stored', async () => {
     const history = await new GetHistoryHandler(new InMemoryEntryRepository()).execute()
-    expect(history).toEqual({ checkIns: [], sessions: [], trend: [] })
+    expect(history).toEqual({ checkIns: [], sessions: [], readings: [], trend: [] })
   })
 })
 
@@ -118,11 +170,13 @@ describe('DeleteAllDataHandler', () => {
     const repo = new InMemoryEntryRepository()
     await new SubmitCheckInHandler(repo).execute({ answers: ANSWERS, journalText: 'note' })
     await new LogCalmSessionHandler(repo).execute({ pattern: 'box', durationSec: 60 })
+    await new SaveHeartReadingHandler(repo).execute({ bpm: 70, rmssd: 40, quality: 'good' })
 
     await new DeleteAllDataHandler(repo).execute()
 
     expect(await repo.listCheckIns()).toEqual([])
     expect(await repo.listJournal()).toEqual([])
     expect(await repo.listSessions()).toEqual([])
+    expect(await repo.listReadings()).toEqual([])
   })
 })

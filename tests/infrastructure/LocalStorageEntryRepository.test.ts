@@ -7,6 +7,7 @@ import {
 import { createCheckIn } from '@/domain/entities/CheckIn'
 import { createJournalEntry } from '@/domain/entities/JournalEntry'
 import { createCalmSession } from '@/domain/entities/CalmSession'
+import { createHeartReading } from '@/domain/entities/HeartReading'
 
 const ANSWERS = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
 
@@ -18,27 +19,32 @@ describe('LocalStorageEntryRepository', () => {
     repo = new LocalStorageEntryRepository()
   })
 
-  it('round-trips check-ins, journal and sessions', async () => {
+  it('round-trips check-ins, journal, sessions and heart readings', async () => {
     const c = createCheckIn({ answers: ANSWERS })
     const j = createJournalEntry({ text: 'a note', checkInId: c.id })
     const s = createCalmSession({ pattern: 'four-seven-eight', durationSec: 300 })
+    const r = createHeartReading({ bpm: 66, rmssd: 38, stressBand: 'moderate', quality: 'good' })
     await repo.addCheckIn(c)
     await repo.addJournal(j)
     await repo.addSession(s)
+    await repo.addReading(r)
 
     expect(await repo.listCheckIns()).toEqual([c])
     expect(await repo.listJournal()).toEqual([j])
     expect(await repo.listSessions()).toEqual([s])
+    expect(await repo.listReadings()).toEqual([r])
 
     // Survives a fresh instance reading the same backing store.
     const repo2 = new LocalStorageEntryRepository()
-    expect((await repo2.listCheckIns())[0]?.id).toBe(c.id)
+    expect((await repo2.listReadings())[0]?.id).toBe(r.id)
   })
 
   it('deleteAll clears the key', async () => {
     await repo.addCheckIn(createCheckIn({ answers: ANSWERS }))
+    await repo.addReading(createHeartReading({ bpm: 70, quality: 'fair' }))
     await repo.deleteAll()
     expect(await repo.listCheckIns()).toEqual([])
+    expect(await repo.listReadings()).toEqual([])
     expect(window.localStorage.getItem(ENTRY_STORE_KEY)).toBeNull()
   })
 
