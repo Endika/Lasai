@@ -106,6 +106,21 @@
     "deleteConfirm": "Sí, borrarlo todo",
     "deleteCancel": "Conservar mis datos"
   },
+  "ppg": {
+    "experimental": "Experimental",
+    "title": "Laboratorio de pulso",
+    "permissionExplain": "Coloca la yema del dedo con suavidad sobre la cámara trasera y el flash, y empieza. La cámara lee los cambios de color bajo tu piel para estimar tu pulso. Los fotogramas se procesan en tu dispositivo y nunca se guardan ni se envían.",
+    "start": "Empezar a medir",
+    "stop": "Detener",
+    "bpm": "Frecuencia cardíaca",
+    "rmssd": "RMSSD",
+    "quality": "Calidad de señal",
+    "weakSignal": "Señal débil: apoya el dedo con suavidad sobre la cámara y el flash, y mantente quieto.",
+    "torch": "Flash",
+    "iosHint": "Aquí no hay control del flash: usa buena iluminación para una señal más limpia.",
+    "errorPermission": "No se pudo acceder a la cámara. Permite el acceso e inténtalo de nuevo.",
+    "waveformAria": "Forma de onda en vivo de tu señal de pulso con los latidos detectados"
+  },
   "band": {
     "low": "Más bajo",
     "moderate": "Moderado",
