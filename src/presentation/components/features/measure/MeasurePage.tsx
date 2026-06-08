@@ -108,6 +108,9 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
 
         if (buf.length >= target) finish()
       })
+      // Turn the flash on for a clean finger-PPG signal — best-effort; a no-op on iOS
+      // and devices without torch control (CameraSignalSource turns it off on stop()).
+      void source.setTorch(true)
       setPhase('capturing')
     } catch {
       sourceRef.current = null
