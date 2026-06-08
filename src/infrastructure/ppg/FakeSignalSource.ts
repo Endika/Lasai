@@ -27,11 +27,15 @@ export class FakeSignalSource implements ISignalSource {
     return Promise.resolve()
   }
 
-  /** Synchronously emit all remaining samples (deterministic, for tests). */
+  /**
+   * Synchronously emit all remaining samples (deterministic, for tests). Stops
+   * early if a consumer calls stop() from within its own callback (the real
+   * Measure flow tears the source down the moment it has enough samples).
+   */
   flush(): void {
-    if (!this.cb) return
     const step = 1000 / this.rate
     for (; this.idx < this.data.length; this.idx++) {
+      if (!this.cb) return
       this.cb({ value: this.data[this.idx] ?? 0, t: this.idx * step })
     }
   }

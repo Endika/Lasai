@@ -2,6 +2,7 @@ import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 import type { CheckIn } from '@/domain/entities/CheckIn'
 import type { JournalEntry } from '@/domain/entities/JournalEntry'
 import type { CalmSession } from '@/domain/entities/CalmSession'
+import type { HeartReading } from '@/domain/entities/HeartReading'
 import { ENTRY_LIST_CAP } from '@/infrastructure/persistence/LocalStorageEntryRepository'
 
 function capNewest<T>(items: T[], cap: number): T[] {
@@ -17,6 +18,7 @@ export class InMemoryEntryRepository implements IEntryRepository {
   private checkIns: CheckIn[] = []
   private journal: JournalEntry[] = []
   private sessions: CalmSession[] = []
+  private readings: HeartReading[] = []
 
   async addCheckIn(checkIn: CheckIn): Promise<void> {
     this.checkIns = capNewest([...this.checkIns, structuredClone(checkIn)], ENTRY_LIST_CAP)
@@ -42,9 +44,18 @@ export class InMemoryEntryRepository implements IEntryRepository {
     return structuredClone(this.sessions)
   }
 
+  async addReading(reading: HeartReading): Promise<void> {
+    this.readings = capNewest([...this.readings, structuredClone(reading)], ENTRY_LIST_CAP)
+  }
+
+  async listReadings(): Promise<HeartReading[]> {
+    return structuredClone(this.readings)
+  }
+
   async deleteAll(): Promise<void> {
     this.checkIns = []
     this.journal = []
     this.sessions = []
+    this.readings = []
   }
 }

@@ -5,6 +5,7 @@ import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEn
 import { SubmitCheckInHandler } from '@/application/handlers/SubmitCheckInHandler'
 import { AddJournalEntryHandler } from '@/application/handlers/AddJournalEntryHandler'
 import { LogCalmSessionHandler } from '@/application/handlers/LogCalmSessionHandler'
+import { SaveHeartReadingHandler } from '@/application/handlers/SaveHeartReadingHandler'
 import { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
 import { DeleteAllDataHandler } from '@/application/handlers/DeleteAllDataHandler'
 
@@ -16,6 +17,7 @@ export function buildContainer(opts: { inMemory?: boolean } = {}): Container {
   c.register('submitCheckIn', () => new SubmitCheckInHandler(c.resolve('entryRepo')))
   c.register('addJournalEntry', () => new AddJournalEntryHandler(c.resolve('entryRepo')))
   c.register('logCalmSession', () => new LogCalmSessionHandler(c.resolve('entryRepo')))
+  c.register('saveHeartReading', () => new SaveHeartReadingHandler(c.resolve('entryRepo')))
   c.register('getHistory', () => new GetHistoryHandler(c.resolve('entryRepo')))
   c.register('deleteAllData', () => new DeleteAllDataHandler(c.resolve('entryRepo')))
   return c

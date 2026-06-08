@@ -8,6 +8,11 @@ no account, no tracking, and no backend: nothing you do ever leaves your phone.
 
 This is an early skeleton. The breathing and calming experiences are on the way.
 
+- **Measure my pulse (experimental):** an on-device camera reading that estimates
+  your heart rate, and a rough HRV-based stress band only when the signal is clean
+  enough. Frames are processed on your device and never stored or sent. It is not a
+  medical device and makes no medical claims.
+
 ## Tech
 
 - React 19 + Vite + TypeScript (strict)

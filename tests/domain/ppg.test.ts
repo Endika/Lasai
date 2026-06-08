@@ -8,6 +8,10 @@ import {
   rmssd,
   signalQuality,
   analyzeWindow,
+  cleanIbis,
+  rmssdRobust,
+  assessReading,
+  stressBandFromRmssd,
   QUALITY_PASS_THRESHOLD,
 } from '@/domain/ppg/dsp'
 
@@ -148,5 +152,91 @@ describe('analyzeWindow', () => {
     const flatNoise = noise(30 * 20).map((v) => v + 130)
     const a = analyzeWindow(flatNoise, 30)
     expect(a.quality).toBeLessThan(QUALITY_PASS_THRESHOLD)
+  })
+})
+
+describe('cleanIbis (artifact rejection)', () => {
+  it('drops physiologically impossible intervals (too fast / too slow)', () => {
+    // 250 ms (>200 bpm) and 1800 ms (<40 bpm) are impossible and removed; the
+    // ~800 ms beats survive.
+    const clean = cleanIbis([800, 250, 810, 1800, 790, 805])
+    expect(clean).toEqual([800, 810, 790, 805])
+  })
+
+  it('drops a >25% outlier (motion / ectopic beat) against the running median', () => {
+    // 1100 ms deviates ~37% from the ~800 ms median -> dropped as an artifact.
+    const clean = cleanIbis([800, 810, 1100, 795, 805])
+    expect(clean).toEqual([800, 810, 795, 805])
+  })
+
+  it('keeps a clean steady series untouched', () => {
+    const series = [800, 820, 810, 790, 805]
+    expect(cleanIbis(series)).toEqual(series)
+  })
+
+  it('returns empty when every interval is impossible', () => {
+    expect(cleanIbis([100, 2000, 50])).toEqual([])
+  })
+})
+
+describe('rmssdRobust', () => {
+  it('matches a hand-computed value on a known clean series', () => {
+    // diffs: 20, -20, 40 -> squares 400, 400, 1600 -> mean 800 -> sqrt(800)
+    expect(rmssdRobust([800, 820, 800, 840])).toBeCloseTo(Math.sqrt(800), 3)
+  })
+
+  it('is zero for perfectly regular intervals', () => {
+    expect(rmssdRobust([800, 800, 800, 800])).toBe(0)
+  })
+
+  it('returns null with fewer than two intervals', () => {
+    expect(rmssdRobust([800])).toBeNull()
+    expect(rmssdRobust([])).toBeNull()
+  })
+})
+
+describe('assessReading (sustained-capture verdict)', () => {
+  it('marks a short noisy capture hrvReliable=false but still reports bpm path', () => {
+    // 10 s of noise: far below the 45 s HRV minimum and low quality.
+    const flatNoise = noise(30 * 10).map((v) => v + 130)
+    const a = assessReading(flatNoise, 30)
+    expect(a.durationSec).toBeCloseTo(10, 1)
+    expect(a.hrvReliable).toBe(false)
+    expect(a.quality).toBe('poor')
+  })
+
+  it('marks a clean 60 s synthetic signal hrvReliable=true with a band-able rmssd', () => {
+    const clean = sine(72, 30, 60, 8).map((v) => v + 130)
+    const a = assessReading(clean, 30)
+    expect(Math.abs(a.bpm - 72)).toBeLessThanOrEqual(3)
+    expect(a.durationSec).toBeGreaterThanOrEqual(45)
+    expect(a.cleanBeatRatio).toBeGreaterThanOrEqual(0.7)
+    expect(a.rmssd).not.toBeNull()
+    expect(a.hrvReliable).toBe(true)
+  })
+
+  it('does not mark a clean but too-short (30 s) capture reliable', () => {
+    const clean = sine(72, 30, 30, 8).map((v) => v + 130)
+    const a = assessReading(clean, 30)
+    expect(a.durationSec).toBeLessThan(45)
+    expect(a.hrvReliable).toBe(false)
+  })
+})
+
+describe('stressBandFromRmssd', () => {
+  it('uses coarse absolute bands without enough history', () => {
+    expect(stressBandFromRmssd(10)).toBe('high') // low HRV -> more stress
+    expect(stressBandFromRmssd(35)).toBe('moderate')
+    expect(stressBandFromRmssd(70)).toBe('low') // high HRV -> calmer
+  })
+
+  it('bands relative to the user own distribution with >=5 prior values', () => {
+    const history = [20, 30, 40, 50, 60, 70]
+    // 22 ms sits in the bottom tertile of this person's own readings -> high.
+    expect(stressBandFromRmssd(22, history)).toBe('high')
+    // 68 ms sits in the top tertile -> low, even though 68 < absolute 70 split.
+    expect(stressBandFromRmssd(68, history)).toBe('low')
+    // A mid value lands moderate.
+    expect(stressBandFromRmssd(45, history)).toBe('moderate')
   })
 })

@@ -6,6 +6,9 @@ import { SCHEMA_VERSION } from '@/infrastructure/persistence/schemaVersion'
 import type { CheckIn } from '@/domain/entities/CheckIn'
 import type { JournalEntry } from '@/domain/entities/JournalEntry'
 import type { CalmSession } from '@/domain/entities/CalmSession'
+import type { HeartReading } from '@/domain/entities/HeartReading'
+
+const READING_QUALITIES = ['good', 'fair', 'poor'] as const
 
 export const CheckInSchema = z.object({
   id: z.string().min(1),
@@ -29,6 +32,15 @@ export const CalmSessionSchema = z.object({
   durationSec: z.number().int().min(1).max(CALM_SESSION_MAX_DURATION_SEC),
 })
 
+export const HeartReadingSchema = z.object({
+  id: z.string().min(1),
+  createdAt: z.string().min(1),
+  bpm: z.number().int().min(30).max(240),
+  rmssd: z.number().min(0).nullable().default(null),
+  stressBand: z.enum(STRESS_BANDS).nullable().default(null),
+  quality: z.enum(READING_QUALITIES),
+})
+
 /**
  * Top-level stored shape. Every list is independently tolerant: a single
  * corrupt element is dropped (catch → never via per-item parsing in the repo),
@@ -38,13 +50,14 @@ export const EntryStoreSchema = z.object({
   checkIns: z.array(CheckInSchema).default([]),
   journal: z.array(JournalEntrySchema).default([]),
   sessions: z.array(CalmSessionSchema).default([]),
+  readings: z.array(HeartReadingSchema).default([]),
   _schemaVersion: z.number().int().default(SCHEMA_VERSION),
 })
 
 export type EntryStore = z.infer<typeof EntryStoreSchema>
 
 export function emptyStore(): EntryStore {
-  return { checkIns: [], journal: [], sessions: [], _schemaVersion: SCHEMA_VERSION }
+  return { checkIns: [], journal: [], sessions: [], readings: [], _schemaVersion: SCHEMA_VERSION }
 }
 
 /**
@@ -59,6 +72,7 @@ export function parseEntryStore(raw: unknown): EntryStore {
     checkIns: parseList(obj.checkIns, CheckInSchema),
     journal: parseList(obj.journal, JournalEntrySchema),
     sessions: parseList(obj.sessions, CalmSessionSchema),
+    readings: parseList(obj.readings, HeartReadingSchema),
     _schemaVersion: typeof obj._schemaVersion === 'number' ? obj._schemaVersion : SCHEMA_VERSION,
   }
 }
@@ -74,4 +88,4 @@ function parseList<T>(value: unknown, schema: z.ZodType<T>): T[] {
 }
 
 // Re-exported so consumers don't reach across to the entity modules just for types.
-export type { CheckIn, JournalEntry, CalmSession }
+export type { CheckIn, JournalEntry, CalmSession, HeartReading }

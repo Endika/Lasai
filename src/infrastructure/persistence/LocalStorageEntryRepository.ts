@@ -2,6 +2,7 @@ import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 import type { CheckIn } from '@/domain/entities/CheckIn'
 import type { JournalEntry } from '@/domain/entities/JournalEntry'
 import type { CalmSession } from '@/domain/entities/CalmSession'
+import type { HeartReading } from '@/domain/entities/HeartReading'
 import {
   emptyStore,
   parseEntryStore,
@@ -42,6 +43,7 @@ export class LocalStorageEntryRepository implements IEntryRepository {
       checkIns: capNewest(store.checkIns, ENTRY_LIST_CAP),
       journal: capNewest(store.journal, ENTRY_LIST_CAP),
       sessions: capNewest(store.sessions, ENTRY_LIST_CAP),
+      readings: capNewest(store.readings, ENTRY_LIST_CAP),
       _schemaVersion: SCHEMA_VERSION,
     }
     try {
@@ -76,6 +78,15 @@ export class LocalStorageEntryRepository implements IEntryRepository {
 
   async listSessions(): Promise<CalmSession[]> {
     return this.read().sessions
+  }
+
+  async addReading(reading: HeartReading): Promise<void> {
+    const store = this.read()
+    this.write({ ...store, readings: [...store.readings, reading] })
+  }
+
+  async listReadings(): Promise<HeartReading[]> {
+    return this.read().readings
   }
 
   async deleteAll(): Promise<void> {
