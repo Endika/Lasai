@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Endika/Lasai/compare/v0.3.0...v0.4.0) (2026-06-08)
+
+
+### Features
+
+* **ppg:** keep screen awake while measuring ([182fd68](https://github.com/Endika/Lasai/commit/182fd680ab9bbfbadf55ed8d3233a5a0b15ab4b5))
+
 ## [0.3.0](https://github.com/Endika/Lasai/compare/v0.2.0...v0.3.0) (2026-06-08)
 
 
