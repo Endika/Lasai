@@ -106,6 +106,21 @@
     "deleteConfirm": "Yes, delete it all",
     "deleteCancel": "Keep my data"
   },
+  "ppg": {
+    "experimental": "Experimental",
+    "title": "Pulse lab",
+    "permissionExplain": "Place a fingertip gently over the rear camera and flash, then start. The camera reads colour changes under your skin to estimate your pulse. Frames are processed on your device and never saved or sent.",
+    "start": "Start measuring",
+    "stop": "Stop",
+    "bpm": "Heart rate",
+    "rmssd": "RMSSD",
+    "quality": "Signal quality",
+    "weakSignal": "Weak signal — press your finger gently over the camera and flash, and hold still.",
+    "torch": "Flash",
+    "iosHint": "No flash control here — use good lighting for a cleaner signal.",
+    "errorPermission": "Couldn't access the camera. Allow camera permission and try again.",
+    "waveformAria": "Live waveform of your pulse signal with detected beats"
+  },
   "band": {
     "low": "Lower",
     "moderate": "Moderate",
