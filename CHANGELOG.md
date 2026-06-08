@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/Endika/Lasai/compare/v0.4.0...v0.5.0) (2026-06-08)
+
+
+### Features
+
+* **ppg:** pulse measurement with gated stress estimate ([d9b3019](https://github.com/Endika/Lasai/commit/d9b30193235d1721df280045091b6a4a1c461f95))
+
 ## [0.4.0](https://github.com/Endika/Lasai/compare/v0.3.0...v0.4.0) (2026-06-08)
 
 
