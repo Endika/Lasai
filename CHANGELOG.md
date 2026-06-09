@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/Endika/Lasai/compare/v0.9.1...v0.10.0) (2026-06-09)
+
+
+### Features
+
+* **motion:** audio-guided chest breathing session ([a2b8993](https://github.com/Endika/Lasai/commit/a2b899381dfca86e3013841fd0ba192f0fe0a0c8))
+
 ## [0.9.1](https://github.com/Endika/Lasai/compare/v0.9.0...v0.9.1) (2026-06-09)
 
 
