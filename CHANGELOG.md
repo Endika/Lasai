@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/Endika/Lasai/compare/v0.7.0...v0.7.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* **icon:** match app icons to the in-app brand mark ([3926d64](https://github.com/Endika/Lasai/commit/3926d646bab2ca2cc0df252ffe6e3b1da884498a))
+
 ## [0.7.0](https://github.com/Endika/Lasai/compare/v0.6.1...v0.7.0) (2026-06-09)
 
 
