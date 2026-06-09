@@ -180,6 +180,7 @@
     "resultTitle": "Tu lectura",
     "bpmLabel": "Frecuencia cardíaca",
     "bpmUnit": "ppm",
+    "detecting": "detectando…",
     "stressTitle": "Estimación de estrés",
     "stressLow": "Más tranquilo",
     "stressModerate": "Moderado",
