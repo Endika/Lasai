@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/Endika/Lasai/compare/v0.9.0...v0.9.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* **ppg:** show live pulse whenever covered, not only perfect windows ([59b7ec2](https://github.com/Endika/Lasai/commit/59b7ec2099a201d89b8c886efc2cb5c1c908d17c))
+
 ## [0.9.0](https://github.com/Endika/Lasai/compare/v0.8.1...v0.9.0) (2026-06-09)
 
 
