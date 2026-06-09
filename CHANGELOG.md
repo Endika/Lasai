@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/Endika/Lasai/compare/v0.11.0...v0.12.0) (2026-06-09)
+
+
+### Features
+
+* **i18n:** add Galician, Basque, Catalan and Valencian ([33b5434](https://github.com/Endika/Lasai/commit/33b54346edea08e85631311997e5f6a15d3cd66c))
+
 ## [0.11.0](https://github.com/Endika/Lasai/compare/v0.10.0...v0.11.0) (2026-06-09)
 
 
