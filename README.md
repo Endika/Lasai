@@ -1,12 +1,30 @@
-# Lasai
+<p align="center">
+  <img src="./public/icon-512.png" width="128" alt="Lasai app icon" />
+</p>
 
-Lasai is a free, offline, ad-free stress-calming and breathing companion.
-Open it, breathe, and feel calmer — everything stays on your device. There is
-no account, no tracking, and no backend: nothing you do ever leaves your phone.
+<h1 align="center">Lasai</h1>
+
+<p align="center">
+  A free, offline, ad-free space to calm down and breathe for a few minutes — everything stays on your device.
+</p>
+
+<p align="center">
+  <a href="https://endika.github.io/Lasai/"><b>Try it now →</b></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Endika/Lasai/releases/latest"><img src="https://img.shields.io/github/v/release/Endika/Lasai?style=flat-square&color=2c8c85&label=release" alt="Latest release" /></a>
+  <a href="https://github.com/Endika/Lasai/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Endika/Lasai/ci.yml?style=flat-square&label=ci&branch=main" alt="CI" /></a>
+  <a href="https://github.com/Endika/Lasai/commits/main"><img src="https://img.shields.io/github/last-commit/Endika/Lasai?style=flat-square" alt="Last commit" /></a>
+  <a href="https://www.conventionalcommits.org"><img src="https://img.shields.io/badge/conventional_commits-1.0.0-FE5196?style=flat-square" alt="Conventional Commits" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/github/license/Endika/Lasai?style=flat-square&color=10B981" alt="License: MIT" /></a>
+</p>
+
+Lasai is a free, offline, ad-free stress-calming and breathing companion. Open it,
+breathe, and feel calmer — everything stays on your device. There is no account, no
+tracking, and no backend: nothing you do ever leaves your phone.
 
 ## Features
-
-This is an early skeleton. The breathing and calming experiences are on the way.
 
 - **Measure my pulse (experimental):** an on-device camera reading that estimates
   your heart rate, and a rough HRV-based stress band only when the signal is clean
