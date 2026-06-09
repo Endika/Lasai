@@ -215,6 +215,28 @@ describe('assessReading (sustained-capture verdict)', () => {
     expect(a.hrvReliable).toBe(true)
   })
 
+  it('reports a usable reading for a realistic capture with HR drift + baseline wander', () => {
+    // Regression: a clearly pulsatile 50 s capture whose heart rate drifts (60→78)
+    // with slow baseline wander. Judged over the WHOLE window it scored below the
+    // quality floor ('poor' → "couldn't get a clean reading") even though the pulse
+    // is obvious; the per-window aggregate must accept it.
+    const fps = 30
+    const secs = 50
+    let phase = 0
+    const out: number[] = []
+    for (let i = 0; i < fps * secs; i++) {
+      const t = i / fps
+      const bpm = 60 + (18 * t) / secs // drift 60 -> 78
+      phase += ((2 * Math.PI * bpm) / 60 / fps)
+      out.push(130 + 8 * Math.sin(phase) + 6 * Math.sin(2 * Math.PI * 0.05 * t))
+    }
+    const a = assessReading(out, fps)
+    expect(a.quality).not.toBe('poor')
+    expect(Number.isFinite(a.bpm)).toBe(true)
+    expect(a.bpm).toBeGreaterThanOrEqual(58)
+    expect(a.bpm).toBeLessThanOrEqual(82)
+  })
+
   it('does not mark a clean but too-short (30 s) capture reliable', () => {
     const clean = sine(72, 30, 30, 8).map((v) => v + 130)
     const a = assessReading(clean, 30)
