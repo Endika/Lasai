@@ -4,6 +4,7 @@ import { SubmitCheckInHandler } from '@/application/handlers/SubmitCheckInHandle
 import { AddJournalEntryHandler } from '@/application/handlers/AddJournalEntryHandler'
 import { LogCalmSessionHandler } from '@/application/handlers/LogCalmSessionHandler'
 import { SaveHeartReadingHandler } from '@/application/handlers/SaveHeartReadingHandler'
+import { SaveMotionReadingHandler } from '@/application/handlers/SaveMotionReadingHandler'
 import { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
 import { DeleteAllDataHandler } from '@/application/handlers/DeleteAllDataHandler'
 
@@ -125,6 +126,37 @@ describe('SaveHeartReadingHandler', () => {
   })
 })
 
+describe('SaveMotionReadingHandler', () => {
+  it('stores a breathing reading with breaths/min only (no faked heart rate)', async () => {
+    const repo = new InMemoryEntryRepository()
+    const reading = await new SaveMotionReadingHandler(repo).execute({
+      breathsPerMin: 12,
+      bcgBpm: null,
+      quality: 0.7,
+    })
+    expect(reading.breathsPerMin).toBe(12)
+    expect(reading.bcgBpm).toBeNull()
+    expect((await repo.listMotionReadings())[0]?.id).toBe(reading.id)
+  })
+
+  it('keeps a supplied experimental bcg bpm', async () => {
+    const repo = new InMemoryEntryRepository()
+    const reading = await new SaveMotionReadingHandler(repo).execute({
+      breathsPerMin: 10,
+      bcgBpm: 64,
+      quality: 0.8,
+    })
+    expect(reading.bcgBpm).toBe(64)
+  })
+
+  it('rejects an implausible breathing rate', async () => {
+    const repo = new InMemoryEntryRepository()
+    await expect(
+      new SaveMotionReadingHandler(repo).execute({ breathsPerMin: 0, quality: 0.5 }),
+    ).rejects.toBeTruthy()
+  })
+})
+
 describe('GetHistoryHandler', () => {
   it('returns check-ins + sessions newest-first and a chronological trend', async () => {
     const repo = new InMemoryEntryRepository()
@@ -142,6 +174,12 @@ describe('GetHistoryHandler', () => {
       quality: 'good',
       now: '2026-06-02T09:00:00.000Z',
     })
+    await new SaveMotionReadingHandler(repo).execute({
+      breathsPerMin: 12,
+      bcgBpm: 62,
+      quality: 0.7,
+      now: '2026-06-02T10:00:00.000Z',
+    })
 
     const history = await new GetHistoryHandler(repo).execute()
 
@@ -152,6 +190,9 @@ describe('GetHistoryHandler', () => {
     expect(history.sessions).toHaveLength(1)
     expect(history.readings).toHaveLength(1)
     expect(history.readings[0]?.bpm).toBe(70)
+    expect(history.motionReadings).toHaveLength(1)
+    expect(history.motionReadings[0]?.breathsPerMin).toBe(12)
+    expect(history.motionReadings[0]?.bcgBpm).toBe(62)
     // Trend is oldest -> newest, one point per check-in, with the date only.
     expect(history.trend).toEqual([
       { date: '2026-06-01', score: 24 },
@@ -161,7 +202,13 @@ describe('GetHistoryHandler', () => {
 
   it('returns empty structures when nothing is stored', async () => {
     const history = await new GetHistoryHandler(new InMemoryEntryRepository()).execute()
-    expect(history).toEqual({ checkIns: [], sessions: [], readings: [], trend: [] })
+    expect(history).toEqual({
+      checkIns: [],
+      sessions: [],
+      readings: [],
+      motionReadings: [],
+      trend: [],
+    })
   })
 })
 
@@ -171,6 +218,7 @@ describe('DeleteAllDataHandler', () => {
     await new SubmitCheckInHandler(repo).execute({ answers: ANSWERS, journalText: 'note' })
     await new LogCalmSessionHandler(repo).execute({ pattern: 'box', durationSec: 60 })
     await new SaveHeartReadingHandler(repo).execute({ bpm: 70, rmssd: 40, quality: 'good' })
+    await new SaveMotionReadingHandler(repo).execute({ breathsPerMin: 12, quality: 0.6 })
 
     await new DeleteAllDataHandler(repo).execute()
 
@@ -178,5 +226,6 @@ describe('DeleteAllDataHandler', () => {
     expect(await repo.listJournal()).toEqual([])
     expect(await repo.listSessions()).toEqual([])
     expect(await repo.listReadings()).toEqual([])
+    expect(await repo.listMotionReadings()).toEqual([])
   })
 })

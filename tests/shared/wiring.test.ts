@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { buildContainer } from '@/shared/di/wiring'
 import { SubmitCheckInHandler } from '@/application/handlers/SubmitCheckInHandler'
 import { SaveHeartReadingHandler } from '@/application/handlers/SaveHeartReadingHandler'
+import { SaveMotionReadingHandler } from '@/application/handlers/SaveMotionReadingHandler'
 import { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
 import { DeleteAllDataHandler } from '@/application/handlers/DeleteAllDataHandler'
 import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEntryRepository'
@@ -12,6 +13,7 @@ describe('wiring', () => {
     const c = buildContainer({ inMemory: true })
     expect(c.resolve('submitCheckIn')).toBeInstanceOf(SubmitCheckInHandler)
     expect(c.resolve('saveHeartReading')).toBeInstanceOf(SaveHeartReadingHandler)
+    expect(c.resolve('saveMotionReading')).toBeInstanceOf(SaveMotionReadingHandler)
     expect(c.resolve('getHistory')).toBeInstanceOf(GetHistoryHandler)
     expect(c.resolve('deleteAllData')).toBeInstanceOf(DeleteAllDataHandler)
     expect(c.resolve('entryRepo')).toBeInstanceOf(InMemoryEntryRepository)

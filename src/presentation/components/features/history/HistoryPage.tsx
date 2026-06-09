@@ -66,7 +66,8 @@ export function HistoryPage() {
     history !== null &&
     history.checkIns.length === 0 &&
     history.sessions.length === 0 &&
-    history.readings.length === 0
+    history.readings.length === 0 &&
+    history.motionReadings.length === 0
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-6 py-8">
@@ -135,6 +136,32 @@ export function HistoryPage() {
                               band: t(READING_BAND_LABEL[r.stressBand]),
                             })
                           : t('history.readingLine', { bpm: r.bpm })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {history.motionReadings.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <h2 className="text-sm font-medium text-ink-soft">
+                  {t('history.motionReadingsTitle')}
+                </h2>
+                <ul className="flex flex-col gap-2">
+                  {history.motionReadings.map((r) => (
+                    <li
+                      key={r.id}
+                      className="flex items-center justify-between rounded-2xl border border-calm/15 bg-surface/70 px-4 py-3"
+                    >
+                      <span className="text-sm text-ink-soft">{fmtDate(r.createdAt)}</span>
+                      <span className="text-sm font-medium text-ink">
+                        {r.bcgBpm != null
+                          ? t('history.motionLineBpm', {
+                              breaths: r.breathsPerMin,
+                              bpm: r.bcgBpm,
+                            })
+                          : t('history.motionLine', { breaths: r.breathsPerMin })}
                       </span>
                     </li>
                   ))}

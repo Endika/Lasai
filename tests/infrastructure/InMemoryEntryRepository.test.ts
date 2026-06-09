@@ -4,6 +4,7 @@ import { ENTRY_LIST_CAP } from '@/infrastructure/persistence/LocalStorageEntryRe
 import { createCheckIn } from '@/domain/entities/CheckIn'
 import { createCalmSession } from '@/domain/entities/CalmSession'
 import { createHeartReading } from '@/domain/entities/HeartReading'
+import { createMotionReading } from '@/domain/entities/MotionReading'
 
 const ANSWERS = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
 
@@ -35,21 +36,40 @@ describe('InMemoryEntryRepository', () => {
     expect((await repo.listReadings())[0]?.bpm).toBe(68)
   })
 
+  it('round-trips a motion reading and isolates stored data', async () => {
+    const repo = new InMemoryEntryRepository()
+    const reading = createMotionReading({ breathsPerMin: 12, bcgBpm: 62, quality: 0.7 })
+    await repo.addMotionReading(reading)
+    const listed = await repo.listMotionReadings()
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.breathsPerMin).toBe(12)
+    expect(listed[0]?.bcgBpm).toBe(62)
+    listed[0]!.breathsPerMin = 99 // mutating the returned copy must not affect storage
+    expect((await repo.listMotionReadings())[0]?.breathsPerMin).toBe(12)
+  })
+
   it('deleteAll wipes every list', async () => {
     const repo = new InMemoryEntryRepository()
     await repo.addCheckIn(createCheckIn({ answers: ANSWERS }))
     await repo.addSession(createCalmSession({ pattern: 'box', durationSec: 60 }))
     await repo.addReading(createHeartReading({ bpm: 70, quality: 'fair' }))
+    await repo.addMotionReading(createMotionReading({ breathsPerMin: 11, quality: 0.6 }))
     await repo.deleteAll()
     expect(await repo.listCheckIns()).toEqual([])
     expect(await repo.listSessions()).toEqual([])
     expect(await repo.listReadings()).toEqual([])
+    expect(await repo.listMotionReadings()).toEqual([])
   })
 
   it('enforces the same newest-N cap as the local repo', async () => {
     const repo = new InMemoryEntryRepository()
     for (let i = 0; i < ENTRY_LIST_CAP + 3; i++) {
-      await repo.addCheckIn(createCheckIn({ answers: ANSWERS, now: `2026-01-01T00:00:${String(i % 60).padStart(2, '0')}.${String(i).padStart(3, '0')}Z` }))
+      await repo.addCheckIn(
+        createCheckIn({
+          answers: ANSWERS,
+          now: `2026-01-01T00:00:${String(i % 60).padStart(2, '0')}.${String(i).padStart(3, '0')}Z`,
+        }),
+      )
     }
     expect(await repo.listCheckIns()).toHaveLength(ENTRY_LIST_CAP)
   })

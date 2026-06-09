@@ -227,7 +227,7 @@ describe('assessReading (sustained-capture verdict)', () => {
     for (let i = 0; i < fps * secs; i++) {
       const t = i / fps
       const bpm = 60 + (18 * t) / secs // drift 60 -> 78
-      phase += ((2 * Math.PI * bpm) / 60 / fps)
+      phase += (2 * Math.PI * bpm) / 60 / fps
       out.push(130 + 8 * Math.sin(phase) + 6 * Math.sin(2 * Math.PI * 0.05 * t))
     }
     const a = assessReading(out, fps)

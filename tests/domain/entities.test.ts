@@ -5,7 +5,10 @@ import { createCalmSession } from '@/domain/entities/CalmSession'
 
 describe('createCheckIn', () => {
   it('computes score + band and stamps id/createdAt', () => {
-    const c = createCheckIn({ answers: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4], now: '2026-06-08T10:00:00.000Z' })
+    const c = createCheckIn({
+      answers: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+      now: '2026-06-08T10:00:00.000Z',
+    })
     expect(c.score).toBe(24)
     expect(c.band).toBe('moderate')
     expect(c.id).toMatch(/[0-9a-f-]{36}/)

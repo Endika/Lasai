@@ -5,8 +5,8 @@ import type { MotionSample } from '@/domain/motion/dsp'
  * acceleration samples (gravity-removed where possible) at a roughly fixed rate.
  *
  * The DeviceMotion adapter and the in-memory fake both implement this, so the
- * motion-lab UI and tests run against the same contract. Samples live only in
- * memory while the source is running — nothing here persists or transmits them.
+ * chest-breathing UI and tests run against the same contract. Samples live only
+ * in memory while the source is running — nothing here persists or transmits them.
  */
 export type MotionPermission = 'granted' | 'denied'
 
