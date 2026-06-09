@@ -15,58 +15,109 @@ import {
   type MotionSample,
 } from '@/domain/motion/dsp'
 
-/** Seconds of signal held in the rolling analysis window. */
-const WINDOW_SECONDS = 30
+/** Fixed capture length: you can't watch the screen with the phone on your chest. */
+const CAPTURE_SECONDS = 40
+const MAX_RAW_SAMPLES = CAPTURE_SECONDS * 120
 
-/** Cap the raw sample buffer to the window at a generous device rate. */
-const MAX_RAW_SAMPLES = WINDOW_SECONDS * 120
+type Phase = 'idle' | 'capturing' | 'result'
 
 interface MotionLabPageProps {
-  /** Override the motion source (tests inject a fake). Defaults to DeviceMotion. */
   createSource?: () => IMotionSource
+}
+
+/** End-of-capture cue so the user knows to pick the phone up — beep + (Android) vibrate. */
+function endCue(audio: AudioContext | null): void {
+  try {
+    navigator.vibrate?.([180, 90, 180])
+  } catch {
+    /* no vibration API — fine */
+  }
+  if (!audio) return
+  try {
+    const o = audio.createOscillator()
+    const g = audio.createGain()
+    o.type = 'sine'
+    o.frequency.value = 660
+    g.gain.setValueAtTime(0.0001, audio.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.18, audio.currentTime + 0.05)
+    g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.6)
+    o.connect(g)
+    g.connect(audio.destination)
+    o.start()
+    o.stop(audio.currentTime + 0.65)
+  } catch {
+    /* audio unavailable — the vibration / frozen result still convey completion */
+  }
 }
 
 export function MotionLabPage({ createSource }: MotionLabPageProps) {
   const { t } = useTranslation()
 
-  const [running, setRunning] = useState(false)
+  const [phase, setPhase] = useState<Phase>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState(CAPTURE_SECONDS)
   const [analysis, setAnalysis] = useState<MotionAnalysis | null>(null)
 
-  // Keep the screen awake while measuring so it doesn't lock mid-reading.
-  useWakeLock(running)
+  useWakeLock(phase === 'capturing')
 
   const sourceRef = useRef<IMotionSource | null>(null)
   const bufferRef = useRef<MotionSample[]>([])
-  const sinceAnalysisRef = useRef(0)
+  const seriesRef = useRef<{ raw: number[]; breath: number[]; bcg: number[] } | null>(null)
+  const audioRef = useRef<AudioContext | null>(null)
+  const doneRef = useRef(false)
   const rawCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const breathCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const bcgCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  const stop = useCallback(() => {
+  const teardown = useCallback(() => {
     sourceRef.current?.stop()
     sourceRef.current = null
-    bufferRef.current = []
-    setRunning(false)
   }, [])
 
-  // Always remove the listener when the view unmounts.
   useEffect(() => {
     return () => {
-      sourceRef.current?.stop()
-      sourceRef.current = null
+      teardown()
+      void audioRef.current?.close()
+      audioRef.current = null
     }
-  }, [])
+  }, [teardown])
+
+  const finish = useCallback(() => {
+    if (doneRef.current) return
+    doneRef.current = true
+    teardown()
+    const buf = bufferRef.current
+    seriesRef.current = {
+      raw: toSeries(buf, TARGET_FPS),
+      breath: lowpass(toSeries(buf, TARGET_FPS), TARGET_FPS),
+      bcg: bandpass(toSeries(buf, TARGET_FPS), TARGET_FPS),
+    }
+    setAnalysis(analyzeMotion(buf, TARGET_FPS))
+    setPhase('result')
+    endCue(audioRef.current)
+  }, [teardown])
 
   const start = useCallback(async () => {
     setError(null)
     setAnalysis(null)
     bufferRef.current = []
-    sinceAnalysisRef.current = 0
+    doneRef.current = false
+    setSecondsLeft(CAPTURE_SECONDS)
+
+    // Create + resume the audio context inside this gesture so the end beep is
+    // allowed to play on iOS (audio can't start outside a user gesture there).
+    if (!audioRef.current) {
+      try {
+        audioRef.current = new AudioContext()
+      } catch {
+        audioRef.current = null
+      }
+    }
+    void audioRef.current?.resume().catch(() => {})
+
     const source = createSource ? createSource() : new DeviceMotionSource()
     sourceRef.current = source
 
-    // iOS requires an explicit permission request from this user gesture.
     if (source.needsPermission()) {
       const result = await source.requestPermission()
       if (result !== 'granted') {
@@ -78,35 +129,38 @@ export function MotionLabPage({ createSource }: MotionLabPageProps) {
 
     try {
       await source.start((sample) => {
+        if (doneRef.current) return
         const buf = bufferRef.current
         buf.push(sample)
         if (buf.length > MAX_RAW_SAMPLES) buf.shift()
-
-        const fps = source.fps() || TARGET_FPS
-        // The autocorrelation analysis is O(n²); running it on every event (≈60/s
-        // over a 30 s buffer) would be wasteful and janky. Re-analyse at most a
-        // few times a second once we have a few seconds of motion to work with.
-        sinceAnalysisRef.current++
-        const reanalyseEvery = Math.max(1, Math.round(fps / 3))
-        if (buf.length >= fps * 4 && sinceAnalysisRef.current >= reanalyseEvery) {
-          sinceAnalysisRef.current = 0
-          const series = toSeries(buf, TARGET_FPS)
-          setAnalysis(analyzeMotion(buf, TARGET_FPS))
-          drawTrace(rawCanvasRef.current, series, '#94a3b8')
-          drawTrace(breathCanvasRef.current, lowpass(series, TARGET_FPS), '#2c8c85')
-          drawTrace(bcgCanvasRef.current, bandpass(series, TARGET_FPS), '#7c5cbf')
-        }
+        // Drive the countdown + completion off real timestamps (testable + accurate).
+        const elapsed = (sample.t - buf[0]!.t) / 1000
+        setSecondsLeft(Math.max(0, Math.ceil(CAPTURE_SECONDS - elapsed)))
+        if (elapsed >= CAPTURE_SECONDS) finish()
       })
-      setRunning(true)
+      setPhase('capturing')
     } catch {
       sourceRef.current = null
       setError(t('motion.errorStart'))
     }
-  }, [createSource, t])
+  }, [createSource, finish, t])
+
+  const cancel = useCallback(() => {
+    teardown()
+    bufferRef.current = []
+    setPhase('idle')
+  }, [teardown])
+
+  // Draw the frozen traces once the result screen is mounted.
+  useEffect(() => {
+    if (phase !== 'result' || !seriesRef.current) return
+    drawTrace(rawCanvasRef.current, seriesRef.current.raw, '#94a3b8')
+    drawTrace(breathCanvasRef.current, seriesRef.current.breath, '#2c8c85')
+    drawTrace(bcgCanvasRef.current, seriesRef.current.bcg, '#7c5cbf')
+  }, [phase])
 
   const breathQuality = analysis?.breathingQuality ?? 0
   const bcgQuality = analysis?.bcgQuality ?? 0
-  const breathPasses = breathQuality >= QUALITY_PASS_THRESHOLD
   const breaths =
     analysis && Number.isFinite(analysis.breathsPerMin) ? String(analysis.breathsPerMin) : '—'
   const bpm = analysis?.bcgBpm != null ? String(analysis.bcgBpm) : '—'
@@ -118,9 +172,6 @@ export function MotionLabPage({ createSource }: MotionLabPageProps) {
           {t('motion.experimental')}
         </span>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink">{t('motion.title')}</h1>
-        <p className="mx-auto mt-2 max-w-xs text-balance text-sm text-ink-soft">
-          {t('motion.permissionExplain')}
-        </p>
       </header>
 
       {error && (
@@ -129,46 +180,57 @@ export function MotionLabPage({ createSource }: MotionLabPageProps) {
         </p>
       )}
 
-      {!running ? (
+      {phase === 'idle' && (
         <>
+          <p className="mx-auto max-w-xs text-balance text-center text-sm text-ink-soft">
+            {t('motion.permissionExplain')}
+          </p>
           <p className="rounded-2xl bg-calm-soft/60 px-4 py-3 text-center text-sm text-calm-deep">
-            {t('motion.guidance')}
+            {t('motion.captureHint')}
           </p>
           <Button className="self-center" onClick={() => void start()}>
             {t('motion.start')}
           </Button>
         </>
-      ) : (
-        <>
-          <p className="text-center text-sm text-ink-soft">{t('motion.guidance')}</p>
+      )}
 
-          <Trace
-            canvasRef={rawCanvasRef}
-            label={t('motion.traceAccel')}
-            aria={t('motion.traceAccelAria')}
-          />
+      {phase === 'capturing' && (
+        <div className="flex flex-col items-center gap-4 py-10">
+          <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full bg-calm-soft">
+            <span className="text-5xl font-light tabular-nums text-ink">{secondsLeft}</span>
+            <span className="text-xs text-ink-faint">{t('motion.secondsUnit')}</span>
+          </div>
+          <p className="max-w-xs text-balance text-center text-sm text-ink-soft" aria-live="polite">
+            {t('motion.capturing')}
+          </p>
+          <Button variant="ghost" className="self-center" onClick={cancel}>
+            {t('motion.cancel')}
+          </Button>
+        </div>
+      )}
+
+      {phase === 'result' && (
+        <>
+          <h2 className="text-center text-sm font-medium text-ink-soft">
+            {t('motion.resultTitle')}
+          </h2>
 
           <div className="flex flex-col gap-2">
+            <Metric label={t('motion.breaths')} value={breaths} unit={t('motion.breathsUnit')} />
+            <QualityBar
+              label={t('motion.quality')}
+              value={breathQuality}
+              passes={breathQuality >= QUALITY_PASS_THRESHOLD}
+              weakHint={t('motion.weakSignal')}
+            />
             <Trace
               canvasRef={breathCanvasRef}
               label={t('motion.traceBreath')}
               aria={t('motion.traceBreathAria')}
             />
-            <Metric label={t('motion.breaths')} value={breaths} unit={t('motion.breathsUnit')} />
-            <QualityBar
-              label={t('motion.quality')}
-              value={breathQuality}
-              passes={breathPasses}
-              weakHint={t('motion.weakSignal')}
-            />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Trace
-              canvasRef={bcgCanvasRef}
-              label={t('motion.traceBcg')}
-              aria={t('motion.traceBcgAria')}
-            />
             <Metric label={t('motion.bpm')} value={bpm} unit={t('motion.bpmUnit')} />
             <p className="text-xs text-ink-faint">{t('motion.bcgNote')}</p>
             <QualityBar
@@ -177,10 +239,21 @@ export function MotionLabPage({ createSource }: MotionLabPageProps) {
               passes={bcgQuality >= QUALITY_PASS_THRESHOLD}
               weakHint={t('motion.weakSignal')}
             />
+            <Trace
+              canvasRef={bcgCanvasRef}
+              label={t('motion.traceBcg')}
+              aria={t('motion.traceBcgAria')}
+            />
           </div>
 
-          <Button variant="soft" className="self-center" onClick={stop}>
-            {t('motion.stop')}
+          <Trace
+            canvasRef={rawCanvasRef}
+            label={t('motion.traceAccel')}
+            aria={t('motion.traceAccelAria')}
+          />
+
+          <Button className="self-center" onClick={() => void start()}>
+            {t('motion.again')}
           </Button>
         </>
       )}
@@ -257,10 +330,7 @@ function QualityBar({
   )
 }
 
-/**
- * Draw a normalized trace of a series onto a canvas. Pure canvas drawing —
- * reads the series, writes pixels, keeps nothing.
- */
+/** Draw a normalized trace of a series onto a canvas. Pure — reads series, writes pixels. */
 function drawTrace(canvas: HTMLCanvasElement | null, series: number[], color: string): void {
   if (!canvas) return
   const ctx = canvas.getContext('2d')

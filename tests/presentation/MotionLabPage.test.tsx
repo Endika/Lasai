@@ -9,11 +9,11 @@ import '@/presentation/i18n/config'
 const FPS = TARGET_FPS
 
 /**
- * Keep the UI fixtures short (the DSP math is exhaustively covered in the domain
- * tests). 16 s clears the analysis threshold and spans several breaths, while
- * keeping the synchronous flush cheap.
+ * Fixtures must exceed the fixed capture length (40 s) so the timestamp-driven
+ * flush reaches the end and freezes a result. The DSP math itself is exhaustively
+ * covered in the domain tests; here we only need to reach the result screen.
  */
-const SECONDS = 16
+const SECONDS = 42
 
 /** A composite: ≈12 br/min breathing + a small ≈60 bpm cardiac recoil on z. */
 function chestSignal(): MotionSample[] {
@@ -47,7 +47,7 @@ describe('MotionLabPage (lab UI with a fake motion source)', () => {
   it('shows the permission explanation, guidance and a start button before measuring', () => {
     render(<MotionLabPage createSource={() => new FakeMotionSource([], FPS)} />)
     expect(screen.getByText(/motion sensor while it rests on your chest/i)).toBeInTheDocument()
-    expect(screen.getByText(/Lie down, rest the phone flat/i)).toBeInTheDocument()
+    expect(screen.getByText(/rest the phone flat on your chest/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument()
   })
 

@@ -129,6 +129,12 @@
   "motion": {
     "experimental": "Experimental",
     "title": "Chest sensor lab",
+    "captureHint": "Lie down and rest the phone flat on your chest. It beeps when done — then pick it up to read your result.",
+    "capturing": "Measuring… lie still and breathe normally.",
+    "secondsUnit": "s left",
+    "cancel": "Cancel",
+    "resultTitle": "Your reading",
+    "again": "Measure again",
     "permissionExplain": "This reads your phone's motion sensor while it rests on your chest, to follow your breathing. Motion data is processed on your device and never saved or sent.",
     "guidance": "Lie down, rest the phone flat on your chest, and hold still.",
     "start": "Start",
