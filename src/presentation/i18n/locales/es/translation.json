@@ -129,6 +129,12 @@
   "motion": {
     "experimental": "Experimental",
     "title": "Laboratorio del sensor de pecho",
+    "captureHint": "Túmbate y apoya el móvil plano sobre el pecho. Pita al terminar; entonces cógelo para leer tu resultado.",
+    "capturing": "Midiendo… quédate quieto y respira con normalidad.",
+    "secondsUnit": "s restantes",
+    "cancel": "Cancelar",
+    "resultTitle": "Tu lectura",
+    "again": "Medir otra vez",
     "permissionExplain": "Lee el sensor de movimiento del teléfono mientras descansa sobre tu pecho, para seguir tu respiración. Los datos de movimiento se procesan en tu dispositivo y nunca se guardan ni se envían.",
     "guidance": "Túmbate, apoya el teléfono plano sobre tu pecho y mantente quieto.",
     "start": "Empezar",
