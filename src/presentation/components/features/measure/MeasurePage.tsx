@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/presentation/components/common/Button'
 import { useWakeLock } from '@/presentation/hooks/useWakeLock'
 import { CameraSignalSource } from '@/infrastructure/ppg/CameraSignalSource'
-import type { ISignalSource } from '@/infrastructure/ppg/ISignalSource'
+import type { ISignalSource, SignalSample } from '@/infrastructure/ppg/ISignalSource'
 import {
   assessReading,
   signalQuality,
@@ -18,6 +18,17 @@ const CAPTURE_SECONDS = 50
 const LIVE_WINDOW_SECONDS = 5
 
 type Phase = 'guide' | 'capturing' | 'result' | 'fail'
+
+/**
+ * Effective sample rate from real timestamps. The camera samples on
+ * requestAnimationFrame (~60 fps on most phones, variable), NOT a fixed 30 — so the
+ * DSP must be told the rate it actually got, or every frequency comes out wrong.
+ */
+function measuredFps(samples: SignalSample[]): number {
+  if (samples.length < 2) return 30
+  const span = (samples[samples.length - 1]!.t - samples[0]!.t) / 1000
+  return span > 0 ? (samples.length - 1) / span : 30
+}
 
 /** iOS Safari gives no torch control; detect to show the lighting hint. */
 function isIos(): boolean {
@@ -48,7 +59,7 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
   useWakeLock(phase === 'capturing')
 
   const sourceRef = useRef<ISignalSource | null>(null)
-  const bufferRef = useRef<number[]>([])
+  const bufferRef = useRef<SignalSample[]>([])
   const doneRef = useRef(false)
 
   const teardown = useCallback(() => {
@@ -62,12 +73,14 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
   const finish = useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
-    const source = sourceRef.current
-    const fps = source?.fps() ?? 30
-    const samples = bufferRef.current
+    const buf = bufferRef.current
     teardown()
 
-    const assessment = assessReading(samples, fps)
+    const fps = measuredFps(buf)
+    const assessment = assessReading(
+      buf.map((s) => s.value),
+      fps,
+    )
     // If the capture never reached usable quality at all, refuse the reading.
     if (assessment.quality === 'poor' || !Number.isFinite(assessment.bpm)) {
       setPhase('fail')
@@ -85,28 +98,34 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
     bufferRef.current = []
     doneRef.current = false
 
-    const source = createSource ? createSource() : new CameraSignalSource(30)
+    const source = createSource ? createSource() : new CameraSignalSource()
     sourceRef.current = source
-    const fps = source.fps()
-    const target = Math.round(fps * CAPTURE_SECONDS)
-    const liveLen = Math.round(fps * LIVE_WINDOW_SECONDS)
 
     try {
       await source.start((sample) => {
         if (doneRef.current) return
         const buf = bufferRef.current
-        buf.push(sample.value)
+        buf.push({ value: sample.value, t: sample.t })
 
-        const elapsed = buf.length / fps
+        // Drive everything off real timestamps, not an assumed sample count.
+        const elapsed = (sample.t - buf[0]!.t) / 1000
         setElapsedSec(Math.min(CAPTURE_SECONDS, elapsed))
 
-        // Cheap live hint from the most recent window only.
-        if (buf.length % Math.max(1, Math.round(fps / 2)) === 0 && buf.length >= liveLen) {
-          const recent = buf.slice(-liveLen)
-          setLiveGood(signalQuality(recent, fps) >= QUALITY_PASS_THRESHOLD)
+        // Cheap live hint from the most recent window (by time), using its measured fps.
+        if (buf.length % 8 === 0) {
+          const cutoff = sample.t - LIVE_WINDOW_SECONDS * 1000
+          const recent = buf.filter((s) => s.t >= cutoff)
+          if (recent.length >= 32) {
+            const fpsLive = measuredFps(recent)
+            const q = signalQuality(
+              recent.map((s) => s.value),
+              fpsLive,
+            )
+            setLiveGood(q >= QUALITY_PASS_THRESHOLD)
+          }
         }
 
-        if (buf.length >= target) finish()
+        if (elapsed >= CAPTURE_SECONDS) finish()
       })
       // Turn the flash on for a clean finger-PPG signal — best-effort; a no-op on iOS
       // and devices without torch control (CameraSignalSource turns it off on stop()).

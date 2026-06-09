@@ -119,7 +119,7 @@ describe('MeasurePage (measure flow with a fake signal source)', () => {
     const onCheckIn = vi.fn()
     // Full-length capture: heart rate is clear, but too many beats are artifacts
     // for a trustworthy HRV estimate -> the honest HR-only path.
-    const source = new FakeSignalSource(hrOnlySignal(50), FPS)
+    const source = new FakeSignalSource(hrOnlySignal(52), FPS)
     renderWithContainer(
       <MeasurePage onCheckIn={onCheckIn} onDone={() => {}} createSource={() => source} />,
       container,

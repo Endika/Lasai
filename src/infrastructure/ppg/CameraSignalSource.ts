@@ -35,15 +35,17 @@ export class CameraSignalSource implements ISignalSource {
   private raf: number | null = null
   private cb: ((s: SignalSample) => void) | null = null
   private torchSupported = false
+  private stopped = false
 
   constructor(fps = 30) {
     this.rate = fps
   }
 
   async start(onSample: (sample: SignalSample) => void): Promise<void> {
+    this.stopped = false
     this.cb = onSample
 
-    this.stream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: 'environment' },
         width: { ideal: 320 },
@@ -52,6 +54,14 @@ export class CameraSignalSource implements ISignalSource {
       audio: false,
     })
 
+    // If stop() was called while permission/getUserMedia was resolving, release the
+    // freshly-acquired stream immediately so the camera never stays on in the background.
+    if (this.stopped) {
+      stream.getTracks().forEach((tr) => tr.stop())
+      return
+    }
+
+    this.stream = stream
     this.track = this.stream.getVideoTracks()[0] ?? null
     this.detectTorch()
 
@@ -101,6 +111,7 @@ export class CameraSignalSource implements ISignalSource {
   }
 
   stop(): void {
+    this.stopped = true
     if (this.raf !== null) {
       cancelAnimationFrame(this.raf)
       this.raf = null
