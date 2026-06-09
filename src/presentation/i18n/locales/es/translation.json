@@ -146,6 +146,7 @@
     "cancel": "Cancelar",
     "follow": "Sigue el sonido",
     "sessionHint": "Apoya el teléfono sobre tu pecho y respira con los tonos. Puedes mantener los ojos cerrados.",
+    "detecting": "detectando…",
     "secondsLeft": "{{seconds}} s restantes",
     "resultTitle": "Tu lectura",
     "breaths": "Frecuencia respiratoria",

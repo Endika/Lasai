@@ -22,6 +22,8 @@ import { getAudioContextCtor, playEndCue, playPhaseCue, vibrate } from './breath
 
 /** Cap on raw samples kept in memory, regardless of duration (no unbounded growth). */
 const MAX_RAW_SAMPLES = 3 * 60 * 120
+/** Recent window (s) for the live in-session breathing/heart estimate. */
+const LIVE_WINDOW_SEC = 20
 
 const DURATIONS_MIN = [1, 2, 3] as const
 
@@ -60,11 +62,14 @@ export function ChestBreathePage({ onDone, createSource }: ChestBreathePageProps
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [activePhase, setActivePhase] = useState<BreathePhase>('inhale')
   const [analysis, setAnalysis] = useState<MotionAnalysis | null>(null)
+  const [liveBreaths, setLiveBreaths] = useState<number | null>(null)
+  const [liveBpm, setLiveBpm] = useState<number | null>(null)
 
   useWakeLock(phase === 'session')
 
   const sourceRef = useRef<IMotionSource | null>(null)
   const bufferRef = useRef<MotionSample[]>([])
+  const lastLiveRef = useRef(0)
   const audioRef = useRef<AudioContext | null>(null)
   const cuesRef = useRef<BreathCue[]>([])
   const nextCueRef = useRef(0)
@@ -105,6 +110,9 @@ export function ChestBreathePage({ onDone, createSource }: ChestBreathePageProps
   const start = useCallback(async () => {
     setError(null)
     setAnalysis(null)
+    setLiveBreaths(null)
+    setLiveBpm(null)
+    lastLiveRef.current = 0
     bufferRef.current = []
     doneRef.current = false
     nextCueRef.current = 0
@@ -159,6 +167,20 @@ export function ChestBreathePage({ onDone, createSource }: ChestBreathePageProps
           setActivePhase(cue.phase)
           playPhaseCue(audioRef.current, cue.phase, cue.durationSec)
           vibrate(cue.phase === 'inhale' || cue.phase === 'exhale' ? 60 : 30)
+        }
+
+        // Live estimate (~1/s) over the recent window — keeps the last good value,
+        // so the user sees it's detecting rather than only a result at the end.
+        if (sample.t - lastLiveRef.current >= 1000) {
+          lastLiveRef.current = sample.t
+          const recent = buf.filter((s) => s.t >= sample.t - LIVE_WINDOW_SEC * 1000)
+          if (recent.length >= TARGET_FPS * 8) {
+            const a = analyzeMotion(recent, TARGET_FPS)
+            if (Number.isFinite(a.breathsPerMin) && a.breathsPerMin > 0) {
+              setLiveBreaths(Math.round(a.breathsPerMin))
+            }
+            if (a.bcgBpm != null) setLiveBpm(a.bcgBpm)
+          }
         }
 
         if (elapsed >= totalSecRef.current) finish()
@@ -225,7 +247,13 @@ export function ChestBreathePage({ onDone, createSource }: ChestBreathePageProps
       )}
 
       {phase === 'session' && (
-        <SessionStep activePhase={activePhase} secondsLeft={secondsLeft} onCancel={cancel} />
+        <SessionStep
+          activePhase={activePhase}
+          secondsLeft={secondsLeft}
+          liveBreaths={liveBreaths}
+          liveBpm={liveBpm}
+          onCancel={cancel}
+        />
       )}
     </section>
   )
@@ -325,10 +353,14 @@ function GuideStep({
 function SessionStep({
   activePhase,
   secondsLeft,
+  liveBreaths,
+  liveBpm,
   onCancel,
 }: {
   activePhase: BreathePhase
   secondsLeft: number
+  liveBreaths: number | null
+  liveBpm: number | null
   onCancel: () => void
 }) {
   const { t } = useTranslation()
@@ -340,6 +372,26 @@ function SessionStep({
         <span className="text-3xl font-light text-ink" aria-live="assertive" role="status">
           {t(PHASE_LABEL[activePhase])}
         </span>
+      </div>
+
+      {/* Live detection — reassures it's measuring; keeps the last value. */}
+      <div className="flex items-center gap-5 text-center" aria-live="polite">
+        <span className="flex items-baseline gap-1 text-ink-soft">
+          <span aria-hidden>🫁</span>
+          <span className="text-2xl font-light tabular-nums text-ink">{liveBreaths ?? '–'}</span>
+          <span className="text-xs text-ink-faint">
+            {liveBreaths != null ? t('chest.breathsUnit') : t('chest.detecting')}
+          </span>
+        </span>
+        {liveBpm != null && (
+          <span className="flex items-baseline gap-1 text-ink-soft">
+            <span aria-hidden className="text-band-high">
+              ♥
+            </span>
+            <span className="text-2xl font-light tabular-nums text-ink">{liveBpm}</span>
+            <span className="text-xs text-ink-faint">{t('chest.bpmUnit')}</span>
+          </span>
+        )}
       </div>
 
       <p className="max-w-xs text-balance text-center text-sm text-ink-soft">
