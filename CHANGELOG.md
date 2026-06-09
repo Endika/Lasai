@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/Endika/Lasai/compare/v0.8.0...v0.8.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* **ppg:** assess pulse over short windows, not whole capture ([d2c9070](https://github.com/Endika/Lasai/commit/d2c9070ffd1c0765c75c22fb574c33a4d7a6be6c))
+
 ## [0.8.0](https://github.com/Endika/Lasai/compare/v0.7.1...v0.8.0) (2026-06-09)
 
 
