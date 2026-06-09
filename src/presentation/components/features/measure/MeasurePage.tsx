@@ -6,6 +6,7 @@ import { CameraSignalSource } from '@/infrastructure/ppg/CameraSignalSource'
 import type { ISignalSource, SignalSample } from '@/infrastructure/ppg/ISignalSource'
 import {
   assessReading,
+  bandpass,
   signalQuality,
   QUALITY_PASS_THRESHOLD,
   type HeartReadingAssessment,
@@ -16,6 +17,34 @@ import { MeasureResult } from './MeasureResult'
 const CAPTURE_SECONDS = 50
 /** Recent-window length (s) used only for the live "signal good/weak" hint. */
 const LIVE_WINDOW_SECONDS = 5
+
+/** Raw mean RED above which the channel is clipping / over-exposed. */
+const BRIGHT_CLIP = 245
+/** Raw mean RED below which the lens is dark / uncovered. */
+const DARK_FLOOR = 20
+
+/**
+ * Coverage/lighting state inferred from the recent RAW mean RED level (and a
+ * weak-but-not-bad-lighting case). Drives the live hint and the fail-screen
+ * cause hint — honest help, never a medical claim.
+ */
+type BrightnessState = 'good' | 'weak' | 'tooBright' | 'tooDark' | 'tooMuchMotion'
+
+/** Map a brightness state to an i18n hint key (null when the signal is good). */
+function hintKeyFor(state: BrightnessState): string | null {
+  switch (state) {
+    case 'tooBright':
+      return 'measure.hintTooBright'
+    case 'tooDark':
+      return 'measure.hintTooDark'
+    case 'tooMuchMotion':
+      return 'measure.hintTooMuchMotion'
+    case 'weak':
+      return 'measure.signalWeak'
+    case 'good':
+      return null
+  }
+}
 
 type Phase = 'guide' | 'capturing' | 'result' | 'fail'
 
@@ -52,7 +81,8 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
   const [phase, setPhase] = useState<Phase>('guide')
   const [error, setError] = useState<string | null>(null)
   const [elapsedSec, setElapsedSec] = useState(0)
-  const [liveGood, setLiveGood] = useState(false)
+  const [brightness, setBrightness] = useState<BrightnessState>('weak')
+  const [failCause, setFailCause] = useState<BrightnessState>('weak')
   const [result, setResult] = useState<HeartReadingAssessment | null>(null)
 
   // Keep the screen awake only while actively capturing.
@@ -61,14 +91,35 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
   const sourceRef = useRef<ISignalSource | null>(null)
   const bufferRef = useRef<SignalSample[]>([])
   const doneRef = useRef(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  // Remember the last live brightness so the fail screen can hint the cause.
+  const lastBrightnessRef = useRef<BrightnessState>('weak')
 
   const teardown = useCallback(() => {
+    // Detach the preview first so the <video> drops its reference to the stream,
+    // then let the source stop() release the underlying tracks (no leaks).
+    if (videoRef.current) videoRef.current.srcObject = null
     sourceRef.current?.stop()
     sourceRef.current = null
   }, [])
 
   // Always release the camera when the view unmounts.
   useEffect(() => () => teardown(), [teardown])
+
+  // Once the capturing UI is mounted, mirror the source's live stream into the
+  // small preview <video> — the SAME stream the source opened, never a second
+  // getUserMedia. No-ops for sources without a preview (e.g. the in-memory fake).
+  useEffect(() => {
+    if (phase !== 'capturing') return
+    const video = videoRef.current
+    const stream = sourceRef.current?.previewStream?.()
+    if (!video || !stream) return
+    video.srcObject = stream
+    void video.play().catch(() => {
+      /* autoplay best-effort; muted+playsinline usually allows it */
+    })
+  }, [phase])
 
   const finish = useCallback(() => {
     if (doneRef.current) return
@@ -83,6 +134,8 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
     )
     // If the capture never reached usable quality at all, refuse the reading.
     if (assessment.quality === 'poor' || !Number.isFinite(assessment.bpm)) {
+      // Surface the last live coverage/lighting/motion state as a likely cause.
+      setFailCause(lastBrightnessRef.current)
       setPhase('fail')
       return
     }
@@ -94,7 +147,8 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
     setError(null)
     setResult(null)
     setElapsedSec(0)
-    setLiveGood(false)
+    setBrightness('weak')
+    lastBrightnessRef.current = 'weak'
     bufferRef.current = []
     doneRef.current = false
 
@@ -111,17 +165,18 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
         const elapsed = (sample.t - buf[0]!.t) / 1000
         setElapsedSec(Math.min(CAPTURE_SECONDS, elapsed))
 
-        // Cheap live hint from the most recent window (by time), using its measured fps.
+        // Cheap live diagnostics from the most recent window (by time), a few
+        // times/sec, using its measured fps. Brightness/coverage hint + waveform.
         if (buf.length % 8 === 0) {
           const cutoff = sample.t - LIVE_WINDOW_SECONDS * 1000
           const recent = buf.filter((s) => s.t >= cutoff)
           if (recent.length >= 32) {
             const fpsLive = measuredFps(recent)
-            const q = signalQuality(
-              recent.map((s) => s.value),
-              fpsLive,
-            )
-            setLiveGood(q >= QUALITY_PASS_THRESHOLD)
+            const values = recent.map((s) => s.value)
+            const state = classifyBrightness(values, fpsLive)
+            setBrightness(state)
+            lastBrightnessRef.current = state
+            drawWaveform(canvasRef.current, values, fpsLive)
           }
         }
 
@@ -130,6 +185,8 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
       // Turn the flash on for a clean finger-PPG signal — best-effort; a no-op on iOS
       // and devices without torch control (CameraSignalSource turns it off on stop()).
       void source.setTorch(true)
+      // The preview <video> is attached by an effect once the capturing phase
+      // renders (the ref doesn't exist yet here). See the effect below.
       setPhase('capturing')
     } catch {
       sourceRef.current = null
@@ -175,10 +232,18 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
       {phase === 'guide' && <GuideStep onStart={() => void start()} onCancel={onDone} />}
 
       {phase === 'capturing' && (
-        <CaptureStep elapsedSec={elapsedSec} liveGood={liveGood} onCancel={cancel} />
+        <CaptureStep
+          elapsedSec={elapsedSec}
+          brightness={brightness}
+          videoRef={videoRef}
+          canvasRef={canvasRef}
+          onCancel={cancel}
+        />
       )}
 
-      {phase === 'fail' && <FailStep onRetry={() => setPhase('guide')} onDone={onDone} />}
+      {phase === 'fail' && (
+        <FailStep cause={failCause} onRetry={() => setPhase('guide')} onDone={onDone} />
+      )}
     </section>
   )
 }
@@ -216,20 +281,47 @@ function GuideStep({ onStart, onCancel }: { onStart: () => void; onCancel: () =>
 
 function CaptureStep({
   elapsedSec,
-  liveGood,
+  brightness,
+  videoRef,
+  canvasRef,
   onCancel,
 }: {
   elapsedSec: number
-  liveGood: boolean
+  brightness: BrightnessState
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
   onCancel: () => void
 }) {
   const { t } = useTranslation()
   const pct = Math.min(100, Math.round((elapsedSec / CAPTURE_SECONDS) * 100))
   const secondsLeft = Math.max(0, Math.ceil(CAPTURE_SECONDS - elapsedSec))
 
+  const good = brightness === 'good'
+  const hintKey = hintKeyFor(brightness)
+
   return (
     <div className="flex flex-col items-center gap-6">
       <ProgressRing pct={pct} />
+
+      {/* What the camera sees + the live pulse wave: helps place the finger. */}
+      <div className="flex items-center gap-4">
+        <video
+          ref={videoRef}
+          muted
+          autoPlay
+          playsInline
+          aria-label={t('measure.previewAria')}
+          className="h-[72px] w-[72px] rounded-2xl border border-calm/15 bg-ink/5 object-cover"
+        />
+        <canvas
+          ref={canvasRef}
+          width={160}
+          height={72}
+          role="img"
+          aria-label={t('measure.waveformAria')}
+          className="h-[72px] w-40 rounded-2xl border border-calm/15 bg-surface/70"
+        />
+      </div>
 
       <div
         aria-live="polite"
@@ -237,8 +329,8 @@ function CaptureStep({
         role="status"
       >
         <p className="text-base font-semibold text-ink">{t('measure.holdSteady')}</p>
-        <p className={`text-sm font-medium ${liveGood ? 'text-band-low' : 'text-band-moderate'}`}>
-          {liveGood ? t('measure.signalGood') : t('measure.signalWeak')}
+        <p className={`text-sm font-medium ${good ? 'text-band-low' : 'text-band-moderate'}`}>
+          {good ? t('measure.signalGood') : t(hintKey ?? 'measure.signalWeak')}
         </p>
         <p className="text-sm tabular-nums text-ink-faint">
           {t('measure.secondsLeft', { seconds: secondsLeft })}
@@ -290,8 +382,19 @@ function ProgressRing({ pct }: { pct: number }) {
   )
 }
 
-function FailStep({ onRetry, onDone }: { onRetry: () => void; onDone: () => void }) {
+function FailStep({
+  cause,
+  onRetry,
+  onDone,
+}: {
+  cause: BrightnessState
+  onRetry: () => void
+  onDone: () => void
+}) {
   const { t } = useTranslation()
+  // Honest, specific help from the last live state, when we have one beyond the
+  // generic "weak". Falls back to the generic guidance otherwise.
+  const causeHint = cause === 'weak' ? null : hintKeyFor(cause)
   return (
     <div className="flex flex-col items-center gap-5 text-center">
       <div className="flex flex-col gap-2 rounded-[1.5rem] border border-calm/15 bg-band-moderate-soft px-6 py-8">
@@ -299,6 +402,11 @@ function FailStep({ onRetry, onDone }: { onRetry: () => void; onDone: () => void
         <p className="max-w-xs text-balance text-sm leading-relaxed text-ink-soft">
           {t('measure.failBody')}
         </p>
+        {causeHint && (
+          <p className="max-w-xs text-balance text-sm font-medium leading-relaxed text-band-moderate">
+            {t(causeHint)}
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <Button className="self-center" onClick={onRetry}>
@@ -310,4 +418,72 @@ function FailStep({ onRetry, onDone }: { onRetry: () => void; onDone: () => void
       </div>
     </div>
   )
+}
+
+/**
+ * Classify the recent window into a coverage/lighting/motion state for the live
+ * hint. This is diagnostics only — it never touches the DSP verdict, which is
+ * still computed honestly at the end by assessReading.
+ *
+ *  - raw mean ≥ BRIGHT_CLIP → the red channel is clipping (over-exposed / lens
+ *    not fully covered with the flash blasting through).
+ *  - raw mean ≤ DARK_FLOOR → dark / lens uncovered (or flash off).
+ *  - otherwise judge by signal quality; if quality is below the pass floor but
+ *    the raw level is jumping around a lot, it's most likely motion.
+ */
+function classifyBrightness(values: number[], fps: number): BrightnessState {
+  if (values.length === 0) return 'weak'
+  let sum = 0
+  for (const v of values) sum += v
+  const m = sum / values.length
+  if (m >= BRIGHT_CLIP) return 'tooBright'
+  if (m <= DARK_FLOOR) return 'tooDark'
+
+  const q = signalQuality(values, fps)
+  if (q >= QUALITY_PASS_THRESHOLD) return 'good'
+
+  // Weak but lit and covered: distinguish jitter (motion) from a flat signal.
+  let varSum = 0
+  for (const v of values) varSum += (v - m) * (v - m)
+  const std = Math.sqrt(varSum / values.length)
+  // A relative swing this large at low quality reads as motion, not a pulse.
+  if (m > 1 && std / m > 0.08) return 'tooMuchMotion'
+  return 'weak'
+}
+
+/**
+ * Draw the recent band-passed signal as a live waveform. Pure canvas drawing —
+ * reads the values, writes pixels, keeps nothing. Adapted from the PPG lab.
+ */
+function drawWaveform(canvas: HTMLCanvasElement | null, raw: number[], fps: number): void {
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const w = canvas.width
+  const h = canvas.height
+  ctx.clearRect(0, 0, w, h)
+
+  const filtered = bandpass(raw, fps)
+  if (filtered.length < 2) return
+
+  let min = Infinity
+  let max = -Infinity
+  for (const v of filtered) {
+    if (v < min) min = v
+    if (v > max) max = v
+  }
+  const range = max - min || 1
+  const x = (i: number) => (i / (filtered.length - 1)) * w
+  const y = (v: number) => h - ((v - min) / range) * (h - 8) - 4
+
+  ctx.beginPath()
+  ctx.strokeStyle = '#2c8c85'
+  ctx.lineWidth = 2
+  for (let i = 0; i < filtered.length; i++) {
+    const px = x(i)
+    const py = y(filtered[i] ?? 0)
+    if (i === 0) ctx.moveTo(px, py)
+    else ctx.lineTo(px, py)
+  }
+  ctx.stroke()
 }
