@@ -180,10 +180,12 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
             setBrightness(state)
             lastBrightnessRef.current = state
             drawWaveform(canvasRef.current, values, fpsLive)
-            // Live detected pulse (keeps the last good value across shaky windows).
-            if (state === 'good') {
+            // Live detected pulse: show it whenever the lens is covered and lit (not
+            // only on a perfect window), gated to a physiological range, so the number
+            // actually appears and updates. Keeps the last value across shaky moments.
+            if (state !== 'tooBright' && state !== 'tooDark') {
               const b = estimateBpm(values, fpsLive)
-              if (Number.isFinite(b)) setLiveBpm(Math.round(b))
+              if (Number.isFinite(b) && b >= 40 && b <= 200) setLiveBpm(Math.round(b))
             }
           }
         }
