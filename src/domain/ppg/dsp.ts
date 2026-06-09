@@ -405,17 +405,58 @@ function qualityBand(score: number): ReadingQuality {
  * from artifact-rejected IBIs and only reported as reliable when the capture
  * was long enough, clean enough, and kept enough beats.
  */
+/** Value at percentile `p` (0..1) — used as a forgiving quality aggregate. */
+function percentile(xs: number[], p: number): number {
+  if (xs.length === 0) return NaN
+  const s = [...xs].sort((a, b) => a - b)
+  return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
+}
+
+/**
+ * Scan the capture in short sliding windows (≈8 s, 2 s hop). Judging quality and
+ * heart rate over the WHOLE capture is too harsh: natural HR drift + baseline
+ * wander drag a long window below threshold even when the pulse is clearly there.
+ * Per-window scoring reflects the better, sustained part of the reading.
+ */
+function scanWindows(samples: number[], fps: number): { qualities: number[]; goodBpms: number[] } {
+  const win = Math.round(8 * fps)
+  const hop = Math.max(1, Math.round(2 * fps))
+  const qualities: number[] = []
+  const goodBpms: number[] = []
+  const push = (seg: number[]) => {
+    const q = signalQuality(seg, fps)
+    qualities.push(q)
+    if (q >= QUALITY_PASS_THRESHOLD) {
+      const b = estimateBpm(seg, fps)
+      if (Number.isFinite(b)) goodBpms.push(b)
+    }
+  }
+  if (samples.length < win) {
+    push(samples)
+  } else {
+    for (let start = 0; start + win <= samples.length; start += hop) {
+      push(samples.slice(start, start + win))
+    }
+  }
+  return { qualities, goodBpms }
+}
+
 export function assessReading(samples: number[], fps: number): HeartReadingAssessment {
   const durationSec = samples.length / fps
-  const quality = signalQuality(samples, fps)
+
+  const { qualities, goodBpms } = scanWindows(samples, fps)
+  // Forgiving aggregate: you can't hold a finger perfectly still for a minute, so a
+  // few shaky windows shouldn't fail an otherwise clear reading.
+  const quality = percentile(qualities, 0.75)
+
+  const bpmFromWindows = median(goodBpms)
+  const bpmRaw = Number.isFinite(bpmFromWindows) ? bpmFromWindows : estimateBpm(samples, fps)
+  const bpm = Number.isFinite(bpmRaw) ? Math.round(bpmRaw) : NaN
 
   const rawIbis = peaksToIbisMs(detectPeaks(samples, fps), fps)
   const clean = cleanIbis(rawIbis)
   const cleanBeatRatio = rawIbis.length > 0 ? clean.length / rawIbis.length : 0
   const robust = rmssdRobust(clean)
-
-  const bpmRaw = estimateBpm(samples, fps)
-  const bpm = Number.isFinite(bpmRaw) ? Math.round(bpmRaw) : NaN
 
   const hrvReliable =
     durationSec >= HRV_MIN_DURATION_SEC &&
