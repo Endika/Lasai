@@ -180,6 +180,7 @@
     "resultTitle": "Your reading",
     "bpmLabel": "Heart rate",
     "bpmUnit": "bpm",
+    "detecting": "detecting…",
     "stressTitle": "Stress estimate",
     "stressLow": "Calmer",
     "stressModerate": "Moderate",

@@ -7,6 +7,7 @@ import type { ISignalSource, SignalSample } from '@/infrastructure/ppg/ISignalSo
 import {
   assessReading,
   bandpass,
+  estimateBpm,
   signalQuality,
   QUALITY_PASS_THRESHOLD,
   type HeartReadingAssessment,
@@ -83,6 +84,7 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
   const [elapsedSec, setElapsedSec] = useState(0)
   const [brightness, setBrightness] = useState<BrightnessState>('weak')
   const [failCause, setFailCause] = useState<BrightnessState>('weak')
+  const [liveBpm, setLiveBpm] = useState<number | null>(null)
   const [result, setResult] = useState<HeartReadingAssessment | null>(null)
 
   // Keep the screen awake only while actively capturing.
@@ -149,6 +151,7 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
     setElapsedSec(0)
     setBrightness('weak')
     lastBrightnessRef.current = 'weak'
+    setLiveBpm(null)
     bufferRef.current = []
     doneRef.current = false
 
@@ -177,6 +180,11 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
             setBrightness(state)
             lastBrightnessRef.current = state
             drawWaveform(canvasRef.current, values, fpsLive)
+            // Live detected pulse (keeps the last good value across shaky windows).
+            if (state === 'good') {
+              const b = estimateBpm(values, fpsLive)
+              if (Number.isFinite(b)) setLiveBpm(Math.round(b))
+            }
           }
         }
 
@@ -235,6 +243,7 @@ export function MeasurePage({ onCheckIn, onDone, createSource }: MeasurePageProp
         <CaptureStep
           elapsedSec={elapsedSec}
           brightness={brightness}
+          liveBpm={liveBpm}
           videoRef={videoRef}
           canvasRef={canvasRef}
           onCancel={cancel}
@@ -282,12 +291,14 @@ function GuideStep({ onStart, onCancel }: { onStart: () => void; onCancel: () =>
 function CaptureStep({
   elapsedSec,
   brightness,
+  liveBpm,
   videoRef,
   canvasRef,
   onCancel,
 }: {
   elapsedSec: number
   brightness: BrightnessState
+  liveBpm: number | null
   videoRef: React.RefObject<HTMLVideoElement | null>
   canvasRef: React.RefObject<HTMLCanvasElement | null>
   onCancel: () => void
@@ -322,6 +333,18 @@ function CaptureStep({
           className="h-[72px] w-40 rounded-2xl border border-calm/15 bg-surface/70"
         />
       </div>
+
+      <p className="flex items-baseline gap-1.5 text-center" aria-live="polite">
+        <span aria-hidden className="text-xl text-band-high">
+          ♥
+        </span>
+        <span className="text-3xl font-light tabular-nums text-ink">
+          {liveBpm != null ? liveBpm : '–'}
+        </span>
+        <span className="text-sm text-ink-faint">
+          {liveBpm != null ? t('measure.bpmUnit') : t('measure.detecting')}
+        </span>
+      </p>
 
       <div
         aria-live="polite"
