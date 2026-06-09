@@ -32,4 +32,11 @@ export interface ISignalSource {
   capabilities(): SignalSourceCapabilities
   /** Toggle the torch where supported; a no-op otherwise. */
   setTorch(on: boolean): Promise<void>
+  /**
+   * The live MediaStream the source opened, for an optional UI preview. The
+   * preview MUST reuse this exact stream (never a second getUserMedia). Optional:
+   * sources without a camera (e.g. the in-memory fake) omit it, and the UI must
+   * no-op gracefully when it is absent or returns null.
+   */
+  previewStream?(): MediaStream | null
 }

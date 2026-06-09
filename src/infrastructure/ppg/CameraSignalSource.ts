@@ -145,6 +145,11 @@ export class CameraSignalSource implements ISignalSource {
     return { torch: this.torchSupported }
   }
 
+  /** The live stream opened by start(), for an optional UI preview. */
+  previewStream(): MediaStream | null {
+    return this.stream
+  }
+
   async setTorch(on: boolean): Promise<void> {
     if (!this.torchSupported || !this.track) return
     try {

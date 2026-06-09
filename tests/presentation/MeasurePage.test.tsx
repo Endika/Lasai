@@ -146,6 +146,44 @@ describe('MeasurePage (measure flow with a fake signal source)', () => {
     expect(history.readings[0]?.stressBand).toBeNull()
   })
 
+  it('a dark/uncovered capture fails and hints to cover the lens', async () => {
+    const user = userEvent.setup()
+    const container = buildContainer({ inMemory: true })
+    // Near-zero raw level over the whole capture = lens dark/uncovered. It both
+    // fails the reading AND drives the "cover the lens" coverage hint.
+    const dark = new Array(FPS * 60).fill(3)
+    const source = new FakeSignalSource(dark, FPS)
+    renderWithContainer(
+      <MeasurePage onCheckIn={() => {}} onDone={() => {}} createSource={() => source} />,
+      container,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    source.flush()
+
+    await waitFor(() =>
+      expect(screen.getByText(/Couldn't get a clean reading/i)).toBeInTheDocument(),
+    )
+    // The specific coverage hint is surfaced alongside the generic guidance.
+    expect(screen.getByText(/Cover the lens fully/i)).toBeInTheDocument()
+  })
+
+  it('the preview no-ops gracefully when the source exposes no stream', async () => {
+    const user = userEvent.setup()
+    const container = buildContainer({ inMemory: true })
+    // The fake source has no previewStream(); the capture UI must still render.
+    const source = new FakeSignalSource(cleanSignal(60), FPS)
+    expect((source as { previewStream?: unknown }).previewStream).toBeUndefined()
+    renderWithContainer(
+      <MeasurePage onCheckIn={() => {}} onDone={() => {}} createSource={() => source} />,
+      container,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    // Capturing UI mounts (including the preview <video>) without throwing.
+    expect(await screen.findByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+  })
+
   it('stops the camera (calls stop) when cancelled mid-capture', async () => {
     const user = userEvent.setup()
     const container = buildContainer({ inMemory: true })
