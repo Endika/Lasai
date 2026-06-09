@@ -146,6 +146,7 @@
     "cancel": "Cancel",
     "follow": "Follow the sound",
     "sessionHint": "Rest the phone on your chest and breathe with the tones. You can keep your eyes closed.",
+    "detecting": "detecting…",
     "secondsLeft": "{{seconds}}s left",
     "resultTitle": "Your reading",
     "breaths": "Breathing rate",
