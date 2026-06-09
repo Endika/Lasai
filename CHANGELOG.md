@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/Endika/Lasai/compare/v0.6.1...v0.7.0) (2026-06-09)
+
+
+### Features
+
+* **motion:** timed capture with frozen result and end cue ([5f1fd01](https://github.com/Endika/Lasai/commit/5f1fd017371e5013b87130a48fae3ef46e513aaa))
+
 ## [0.6.1](https://github.com/Endika/Lasai/compare/v0.6.0...v0.6.1) (2026-06-09)
 
 
