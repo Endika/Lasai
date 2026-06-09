@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/Endika/Lasai/compare/v0.10.0...v0.11.0) (2026-06-09)
+
+
+### Features
+
+* **motion:** live breaths/min + pulse during chest session ([ef5d20a](https://github.com/Endika/Lasai/commit/ef5d20a2030d49af83d5fe9d4d70864f806547b4))
+
 ## [0.10.0](https://github.com/Endika/Lasai/compare/v0.9.1...v0.10.0) (2026-06-09)
 
 
