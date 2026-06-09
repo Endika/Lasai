@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.1](https://github.com/Endika/Lasai/compare/v0.6.0...v0.6.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* **ppg:** use measured fps so pulse readings work ([46c1668](https://github.com/Endika/Lasai/commit/46c16682e738aca5604cda6e897776eabb81f5ab))
+
+
+### Documentation
+
+* add icon, live link and badges to the readme ([679b10a](https://github.com/Endika/Lasai/commit/679b10a984d3f7e18a1fd1aa574984d7584429e9))
+
 ## [0.6.0](https://github.com/Endika/Lasai/compare/v0.5.1...v0.6.0) (2026-06-08)
 
 
