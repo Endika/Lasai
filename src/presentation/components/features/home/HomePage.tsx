@@ -6,9 +6,16 @@ interface HomePageProps {
   onCheckIn: () => void
   onHistory: () => void
   onMeasure: () => void
+  onChestBreathe: () => void
 }
 
-export function HomePage({ onCalm, onCheckIn, onHistory, onMeasure }: HomePageProps) {
+export function HomePage({
+  onCalm,
+  onCheckIn,
+  onHistory,
+  onMeasure,
+  onChestBreathe,
+}: HomePageProps) {
   const { t } = useTranslation()
 
   return (
@@ -51,6 +58,12 @@ export function HomePage({ onCalm, onCheckIn, onHistory, onMeasure }: HomePagePr
           hint={t('home.measureHint')}
           onClick={onMeasure}
           badge={t('measure.experimental')}
+        />
+        <SecondaryEntry
+          title={t('home.chestBreathe')}
+          hint={t('home.chestBreatheHint')}
+          onClick={onChestBreathe}
+          badge={t('chest.experimental')}
         />
         <SecondaryEntry
           title={t('home.history')}

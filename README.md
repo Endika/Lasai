@@ -30,6 +30,12 @@ tracking, and no backend: nothing you do ever leaves your phone.
   your heart rate, and a rough HRV-based stress band only when the signal is clean
   enough. Frames are processed on your device and never stored or sent. It is not a
   medical device and makes no medical claims.
+- **Breathe on your chest (experimental):** an audio-guided breathing session you
+  do lying down with the phone on your chest. Tones glide up to inhale and down to
+  exhale (with a vibration cue on Android) so you can keep your eyes closed, while
+  the accelerometer follows your breathing to estimate your breaths per minute (and
+  a rough, experimental heart-rate estimate only when the signal is clean enough).
+  Motion is processed on your device and never stored or sent. Not a medical device.
 
 ## Tech
 

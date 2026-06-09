@@ -9,11 +9,11 @@ import { CheckInPage } from '@/presentation/components/features/checkin/CheckInP
 import { HistoryPage } from '@/presentation/components/features/history/HistoryPage'
 import { MeasurePage } from '@/presentation/components/features/measure/MeasurePage'
 import { PpgLabPage } from '@/presentation/components/features/ppg/PpgLabPage'
-import { MotionLabPage } from '@/presentation/components/features/motion/MotionLabPage'
+import { ChestBreathePage } from '@/presentation/components/features/breathe-chest/ChestBreathePage'
 
-// 'ppg-lab' and 'motion-lab' are hidden diagnostic routes reachable only via
-// ?view=…; both are intentionally NOT linked from Home or any menu (SPIKEs).
-type View = 'home' | 'calm' | 'checkin' | 'history' | 'measure' | 'ppg-lab' | 'motion-lab'
+// 'ppg-lab' is a hidden diagnostic route reachable only via ?view=… and is
+// intentionally NOT linked from Home or any menu (a SPIKE).
+type View = 'home' | 'calm' | 'checkin' | 'history' | 'measure' | 'breathe-chest' | 'ppg-lab'
 
 const VIEWS: readonly View[] = [
   'home',
@@ -21,8 +21,8 @@ const VIEWS: readonly View[] = [
   'checkin',
   'history',
   'measure',
+  'breathe-chest',
   'ppg-lab',
-  'motion-lab',
 ]
 
 function readView(): View {
@@ -73,6 +73,7 @@ export default function App() {
             onCheckIn={() => go('checkin')}
             onHistory={() => go('history')}
             onMeasure={() => go('measure')}
+            onChestBreathe={() => go('breathe-chest')}
           />
         )}
         {view === 'calm' && <CalmSession onHome={goHome} />}
@@ -81,8 +82,8 @@ export default function App() {
         )}
         {view === 'history' && <HistoryPage />}
         {view === 'measure' && <MeasurePage onCheckIn={() => go('checkin')} onDone={goHome} />}
+        {view === 'breathe-chest' && <ChestBreathePage onDone={goHome} />}
         {view === 'ppg-lab' && <PpgLabPage />}
-        {view === 'motion-lab' && <MotionLabPage />}
 
         <Footer />
       </div>

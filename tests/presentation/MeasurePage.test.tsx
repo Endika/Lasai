@@ -56,7 +56,11 @@ describe('MeasurePage (measure flow with a fake signal source)', () => {
   it('shows guidance and a start control before measuring', () => {
     const container = buildContainer({ inMemory: true })
     renderWithContainer(
-      <MeasurePage onCheckIn={() => {}} onDone={() => {}} createSource={() => new FakeSignalSource([], FPS)} />,
+      <MeasurePage
+        onCheckIn={() => {}}
+        onDone={() => {}}
+        createSource={() => new FakeSignalSource([], FPS)}
+      />,
       container,
     )
     expect(screen.getByText(/Before you start/i)).toBeInTheDocument()

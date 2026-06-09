@@ -36,9 +36,7 @@ describe('CheckInPage', () => {
     expect(screen.getByText('Moderate stress right now')).toBeInTheDocument()
     // Attribution + disclaimer are present.
     expect(screen.getByText('Perceived Stress Scale, Cohen et al.')).toBeInTheDocument()
-    expect(
-      screen.getByText('This is for self-reflection, not a diagnosis.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('This is for self-reflection, not a diagnosis.')).toBeInTheDocument()
   })
 
   it('blocks submit until every item is answered', async () => {
@@ -63,7 +61,9 @@ describe('CheckInPage', () => {
     await user.click(screen.getByRole('button', { name: 'See my reflection' }))
     await screen.findByText(/of 40/)
 
-    const repo = container.resolve<{ listCheckIns: () => Promise<{ score: number }[]> }>('entryRepo')
+    const repo = container.resolve<{ listCheckIns: () => Promise<{ score: number }[]> }>(
+      'entryRepo',
+    )
     const stored = await repo.listCheckIns()
     expect(stored).toHaveLength(1)
     // All "Never" (0); reverse items (4) contribute 4 each -> score 16.
