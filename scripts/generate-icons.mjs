@@ -8,32 +8,22 @@ mkdirSync(OUT, { recursive: true })
 // Calm palette
 const BG = '#EAF6F5' // calm-soft
 const TEAL = '#3FB8AF' // calm
-const TEAL_DEEP = '#2E938C'
 
 /**
- * Placeholder Lasai icon: a soft teal "breathing" circle on a calm background.
- * Intentionally minimal — to be replaced by real branding later.
+ * Lasai icon = the in-app brand mark (CalmMark): two overlapping soft petals.
+ * Same paths as src/presentation/components/common/CalmMark.tsx, so the installed
+ * icon, the favicon and the in-app logo all match. Centered on a calm-soft tile.
  */
 function iconSvg({ size, withBackground = true }) {
-  const radius = size * 0.22
-  const cx = size / 2
-  const cy = size / 2
+  // Authored in the 32-unit CalmMark space; sharp rasterizes at width/height.
   const bg = withBackground
-    ? `<rect x="0" y="0" width="${size}" height="${size}" rx="${radius.toFixed(2)}" ry="${radius.toFixed(2)}" fill="${BG}"/>`
+    ? `<rect x="0" y="0" width="32" height="32" rx="7" ry="7" fill="${BG}"/>`
     : ''
   return `
-  <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <defs>
-      <radialGradient id="g" cx="50%" cy="42%" r="60%">
-        <stop offset="0%" stop-color="${TEAL}"/>
-        <stop offset="100%" stop-color="${TEAL_DEEP}"/>
-      </radialGradient>
-    </defs>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32">
     ${bg}
-    <circle cx="${cx}" cy="${cy}" r="${(size * 0.34).toFixed(2)}" fill="url(#g)"/>
-    <circle cx="${cx}" cy="${cy}" r="${(size * 0.34).toFixed(2)}" fill="none"
-            stroke="${BG}" stroke-opacity="0.55" stroke-width="${(size * 0.035).toFixed(2)}"/>
-    <circle cx="${cx}" cy="${cy}" r="${(size * 0.18).toFixed(2)}" fill="${BG}" fill-opacity="0.9"/>
+    <path d="M16 4c6 4 9 8 9 13a9 9 0 0 1-18 0c0-5 3-9 9-13Z" fill="${TEAL}" opacity="0.9"/>
+    <path d="M16 9c3.2 2.4 5 5 5 8.2A5 5 0 0 1 16 22a5 5 0 0 1-5-4.8c0-3.2 1.8-5.8 5-8.2Z" fill="${BG}"/>
   </svg>`
 }
 
