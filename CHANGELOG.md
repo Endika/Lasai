@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/Endika/Lasai/compare/v0.7.1...v0.8.0) (2026-06-09)
+
+
+### Features
+
+* **ppg:** live camera preview, waveform and placement hints ([a4212df](https://github.com/Endika/Lasai/commit/a4212dfb1161a6da3cf8ae7013b2bf7ce6656da8))
+
 ## [0.7.1](https://github.com/Endika/Lasai/compare/v0.7.0...v0.7.1) (2026-06-09)
 
 
