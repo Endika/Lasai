@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.12.1](https://github.com/Endika/Lasai/compare/v0.12.0...v0.12.1) (2026-07-06)
+
+
+### Chores
+
+* **deps-dev:** bump @types/node from 25.9.3 to 26.0.1 ([c587a68](https://github.com/Endika/Lasai/commit/c587a6869cbfa48f991ef618cdc70dbfc48f375b))
+* **deps-dev:** bump the npm-minor-patch group with 4 updates ([12a4d06](https://github.com/Endika/Lasai/commit/12a4d06f9fefba39e199b2dd051a1862c00d655f))
+* **deps-dev:** bump the npm-minor-patch group with 9 updates ([07eb9b5](https://github.com/Endika/Lasai/commit/07eb9b5d5ae01f79c2f253e04991804eb3edf552))
+* **deps:** bump the npm-minor-patch group with 15 updates ([f032b4c](https://github.com/Endika/Lasai/commit/f032b4c129df096836c1627e0191cea3ce0401da))
+
 ## [0.12.0](https://github.com/Endika/Lasai/compare/v0.11.0...v0.12.0) (2026-06-09)
 
 
