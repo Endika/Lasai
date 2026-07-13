@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.3](https://github.com/Endika/Lasai/compare/v0.12.2...v0.12.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* prevent accidental pinch and double-tap zoom on mobile ([5da2e26](https://github.com/Endika/Lasai/commit/5da2e26830ad3241ded94f3802c6862b3b8535eb))
+
 ## [0.12.2](https://github.com/Endika/Lasai/compare/v0.12.1...v0.12.2) (2026-07-07)
 
 
