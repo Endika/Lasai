@@ -2,11 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
     <meta name="theme-color" content="#3FB8AF" />
     <title>Lasai</title>
+    <style>
+      /* Prevent accidental zoom on mobile: block double-tap zoom, keep scroll/tap. */
+      html {
+        touch-action: manipulation;
+      }
+    </style>
+    <script>
+      // iOS Safari ignores user-scalable=no, so block pinch-zoom explicitly.
+      document.addEventListener('gesturestart', function (e) {
+        e.preventDefault()
+      })
+    </script>
   </head>
   <body class="antialiased">
     <div id="root"></div>
