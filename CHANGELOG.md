@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.5](https://github.com/Endika/Lasai/compare/v0.12.4...v0.12.5) (2026-07-21)
+
+
+### Chores
+
+* **deps:** bump the npm-minor-patch group with 9 updates ([cb3f952](https://github.com/Endika/Lasai/commit/cb3f9528bd469f5b263201fb0648095f7eec528b))
+
 ## [0.12.4](https://github.com/Endika/Lasai/compare/v0.12.3...v0.12.4) (2026-07-20)
 
 
