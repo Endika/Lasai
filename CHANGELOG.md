@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.6](https://github.com/Endika/Lasai/compare/v0.12.5...v0.12.6) (2026-07-28)
+
+
+### Chores
+
+* **deps-dev:** bump jsdom from 29.1.1 to 30.0.0 ([ccb8605](https://github.com/Endika/Lasai/commit/ccb860563d517cab9ba982540fedc30408b6d9d0))
+* **deps:** bump the npm-minor-patch group with 11 updates ([571b440](https://github.com/Endika/Lasai/commit/571b4402994169cbbc21b87322f6f2ff078dbe11))
+
 ## [0.12.5](https://github.com/Endika/Lasai/compare/v0.12.4...v0.12.5) (2026-07-21)
 
 
