@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.7](https://github.com/Endika/Lasai/compare/v0.12.6...v0.12.7) (2026-07-28)
+
+
+### Chores
+
+* **deps-dev:** bump @testing-library/jest-dom from 6.9.1 to 7.0.0 ([0db7267](https://github.com/Endika/Lasai/commit/0db72670bd0cfafa2a2a196a549381df9b48ec87))
+
 ## [0.12.6](https://github.com/Endika/Lasai/compare/v0.12.5...v0.12.6) (2026-07-28)
 
 
