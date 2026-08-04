@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.12.8](https://github.com/Endika/Lasai/compare/v0.12.7...v0.12.8) (2026-08-04)
+
+
+### Chores
+
+* **deps-dev:** bump the npm-minor-patch group with 7 updates ([a7962ef](https://github.com/Endika/Lasai/commit/a7962ef920badefaaccd362c558302ad4a19961e))
+* **deps:** bump brace-expansion ([20abe45](https://github.com/Endika/Lasai/commit/20abe458926331e54b944d99565943d0fb5a9483))
+* **deps:** bump fast-uri from 3.1.2 to 3.1.5 ([8638b7d](https://github.com/Endika/Lasai/commit/8638b7d810209ad0792c5923e637518f8ad18373))
+
 ## [0.12.7](https://github.com/Endika/Lasai/compare/v0.12.6...v0.12.7) (2026-07-28)
 
 
