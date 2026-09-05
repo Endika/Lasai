@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.9](https://github.com/Endika/Lasai/compare/v0.12.8...v0.12.9) (2026-09-05)
+
+
+### Chores
+
+* **deps-dev:** bump browserslist ([8bb2ae8](https://github.com/Endika/Lasai/commit/8bb2ae8290473fdc1d3adc811c618f745d9af88c))
+* **deps-dev:** bump the npm-minor-patch group with 11 updates ([e90e48d](https://github.com/Endika/Lasai/commit/e90e48d004703922c84ac62b60ed696657035e3f))
+* **deps-dev:** bump the npm-minor-patch group with 11 updates ([2c1df0e](https://github.com/Endika/Lasai/commit/2c1df0e18554e62ecbbbc8974aa4889a12121a66))
+* **deps-dev:** bump the npm-minor-patch group with 7 updates ([7502fe4](https://github.com/Endika/Lasai/commit/7502fe494f3ae6d8c3f4ec7d0aceb8c571468144))
+* **deps:** bump fast-uri in the security-npm group across 1 directory ([35c2574](https://github.com/Endika/Lasai/commit/35c257445f83b4503a61b93e3d3eed0e2f4f8cc0))
+* **deps:** bump the npm-minor-patch group with 8 updates ([431e7b2](https://github.com/Endika/Lasai/commit/431e7b2fa6831e84033135a75c9ff3643b43eba0))
+* extend format, lint and type gates to the tests directory ([a985a41](https://github.com/Endika/Lasai/commit/a985a41a28cd46d94670f39d1b4d40b8931cc066))
+
 ## [0.12.8](https://github.com/Endika/Lasai/compare/v0.12.7...v0.12.8) (2026-08-04)
 
 
