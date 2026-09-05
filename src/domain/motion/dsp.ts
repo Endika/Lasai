@@ -271,7 +271,10 @@ function periodicity(
   maxHz: number,
 ): { score: number; lag: number } {
   const n = filtered.length
-  const centered = filtered.map((v) => v - mean(filtered))
+  // Loop-invariant: computing mean() inside the map below made this O(n^2), and
+  // the live in-session estimate re-runs it every second over a 20 s window.
+  const m = mean(filtered)
+  const centered = filtered.map((v) => v - m)
   const energy = autocorrelation(centered, 0)
   if (energy <= 0) return { score: 0, lag: NaN }
 

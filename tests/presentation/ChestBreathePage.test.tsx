@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ChestBreathePage } from '@/presentation/components/features/breathe-chest/ChestBreathePage'
 import { ContainerProvider } from '@/presentation/context/ContainerProvider'
@@ -65,11 +65,13 @@ describe('ChestBreathePage (audio-guided session with a fake motion source)', ()
 
     await selectOneMinute(user)
     await user.click(screen.getByRole('button', { name: 'Start' }))
-    source.flush()
-
-    await waitFor(() => {
-      expect(screen.getByText('Your reading')).toBeInTheDocument()
+    // The replay drives React state outside any event handler; act() flushes the
+    // resulting render before we assert, instead of leaving it to the scheduler.
+    await act(async () => {
+      source.flush()
     })
+
+    await screen.findByText('Your reading')
 
     // A plausible breathing number is rendered (10–14 br/min), not the em-dash.
     const breathBlock = screen.getByText('br/min').closest('div')?.textContent ?? ''
