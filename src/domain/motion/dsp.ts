@@ -282,6 +282,12 @@ function periodicity(
   const maxLag = Math.floor(fps / minHz)
   if (n <= maxLag + 1) return { score: 0, lag: NaN }
 
+  // Each in-band lag is asked for three times as the neighbour comparison slides
+  // (as lag-1, lag and lag+1), and twice more by the refinement below. Computing
+  // the whole band once up front is the same arithmetic, a third of the work.
+  const acf = new Array<number>(maxLag + 1).fill(0)
+  for (let lag = minLag; lag <= maxLag; lag++) acf[lag] = autocorrelation(centered, lag)
+
   // Search for an INTERIOR local maximum within the band. A genuine periodic
   // component peaks inside the band; a value merely pinned to an endpoint is the
   // tail of an out-of-band rhythm leaking through the box filter (e.g. a strong
@@ -289,9 +295,9 @@ function periodicity(
   let bestLag = -1
   let bestVal = -Infinity
   for (let lag = minLag + 1; lag < maxLag; lag++) {
-    const val = autocorrelation(centered, lag)
-    const prev = autocorrelation(centered, lag - 1)
-    const next = autocorrelation(centered, lag + 1)
+    const val = acf[lag] ?? 0
+    const prev = acf[lag - 1] ?? 0
+    const next = acf[lag + 1] ?? 0
     if (val >= prev && val >= next && val > bestVal) {
       bestVal = val
       bestLag = lag
@@ -302,9 +308,9 @@ function periodicity(
   // Parabolic interpolation around the integer peak for sub-sample resolution.
   let refined = bestLag
   if (bestLag > minLag && bestLag < maxLag) {
-    const ym1 = autocorrelation(centered, bestLag - 1)
+    const ym1 = acf[bestLag - 1] ?? 0
     const y0 = bestVal
-    const yp1 = autocorrelation(centered, bestLag + 1)
+    const yp1 = acf[bestLag + 1] ?? 0
     const denom = ym1 - 2 * y0 + yp1
     if (denom !== 0) {
       const delta = (0.5 * (ym1 - yp1)) / denom
