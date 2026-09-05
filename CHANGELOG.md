@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.11](https://github.com/Endika/Lasai/compare/v0.12.10...v0.12.11) (2026-09-05)
+
+
+### Performance
+
+* **motion:** compute each autocorrelation lag once in periodicity ([0d541fa](https://github.com/Endika/Lasai/commit/0d541faea666c21d33f5d927ef51f5c7081fc4a2))
+
 ## [0.12.10](https://github.com/Endika/Lasai/compare/v0.12.9...v0.12.10) (2026-09-05)
 
 
