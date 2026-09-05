@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.10](https://github.com/Endika/Lasai/compare/v0.12.9...v0.12.10) (2026-09-05)
+
+
+### Bug Fixes
+
+* **motion:** hoist the loop-invariant mean out of the periodicity map ([814209d](https://github.com/Endika/Lasai/commit/814209df28f724be444cdf8da24c419b99e964db))
+
 ## [0.12.9](https://github.com/Endika/Lasai/compare/v0.12.8...v0.12.9) (2026-09-05)
 
 
