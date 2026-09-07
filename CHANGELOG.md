@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.12](https://github.com/Endika/Lasai/compare/v0.12.11...v0.12.12) (2026-09-07)
+
+
+### Chores
+
+* **deps-dev:** bump vitest and @vitest/coverage-v8 to 5.0.0 ([80ad236](https://github.com/Endika/Lasai/commit/80ad2364d89a128ff10a3ea877b9b18af092ce63))
+* **deps:** bump the npm-minor-patch group with 14 updates ([4da2c87](https://github.com/Endika/Lasai/commit/4da2c87dbe55f1c6587f4dfc93f6a492917c5b14))
+
 ## [0.12.11](https://github.com/Endika/Lasai/compare/v0.12.10...v0.12.11) (2026-09-05)
 
 
