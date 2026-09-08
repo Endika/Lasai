@@ -30,13 +30,3 @@ jobs:
           REPO: ${{ github.repository }}
           PR_JSON: ${{ steps.release.outputs.pr }}
         run: gh pr merge --rebase --auto -R "$REPO" "$(echo "$PR_JSON" | jq -r .number)"
-
-      # When a release is actually published, redeploy from main so the live
-      # build carries the bumped version. release-please's own version-bump
-      # commit is pushed by GITHUB_TOKEN and does NOT trigger the on:push deploy,
-      # so the site would otherwise stay one release behind.
-      - if: ${{ steps.release.outputs.release_created }}
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: gh workflow run deploy.yml -R "$REPO" --ref main
