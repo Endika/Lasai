@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/Endika/Lasai/compare/v0.12.12...v0.13.0) (2026-09-16)
+
+
+### Features
+
+* **ci:** block PRs that introduce high-severity dependency advisories ([8195a77](https://github.com/Endika/Lasai/commit/8195a77dd4a592161639c9753bca3b8f6b8e1679))
+
 ## [0.12.12](https://github.com/Endika/Lasai/compare/v0.12.11...v0.12.12) (2026-09-07)
 
 
