@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/Endika/Lasai/compare/v0.13.0...v0.14.0) (2026-09-16)
+
+
+### Features
+
+* **ci:** add CodeQL static analysis ([e556c39](https://github.com/Endika/Lasai/commit/e556c392a56a37357e9f6b50c88821250c45c83d))
+
 ## [0.13.0](https://github.com/Endika/Lasai/compare/v0.12.12...v0.13.0) (2026-09-16)
 
 
