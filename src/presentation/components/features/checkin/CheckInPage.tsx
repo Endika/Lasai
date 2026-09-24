@@ -23,6 +23,7 @@ export function CheckInPage({ onCalm, onDone }: { onCalm: () => void; onDone: ()
   const [journal, setJournal] = useState('')
   const [showIncomplete, setShowIncomplete] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [submitFailed, setSubmitFailed] = useState(false)
   const [result, setResult] = useState<CheckIn | null>(null)
 
   if (result) {
@@ -37,6 +38,7 @@ export function CheckInPage({ onCalm, onDone }: { onCalm: () => void; onDone: ()
       return
     }
     setSubmitting(true)
+    setSubmitFailed(false)
     try {
       const handler = container.resolve<SubmitCheckInHandler>('submitCheckIn')
       const checkIn = await handler.execute({
@@ -44,6 +46,8 @@ export function CheckInPage({ onCalm, onDone }: { onCalm: () => void; onDone: ()
         journalText: journal.trim() || undefined,
       })
       setResult(checkIn)
+    } catch {
+      setSubmitFailed(true)
     } finally {
       setSubmitting(false)
     }
@@ -114,6 +118,12 @@ export function CheckInPage({ onCalm, onDone }: { onCalm: () => void; onDone: ()
       {showIncomplete && (
         <p role="alert" className="text-sm text-band-high">
           {t('checkIn.incomplete')}
+        </p>
+      )}
+
+      {submitFailed && (
+        <p role="alert" className="rounded-2xl bg-band-high-soft px-4 py-3 text-sm text-ink-soft">
+          {t('common.saveFailed')}
         </p>
       )}
 

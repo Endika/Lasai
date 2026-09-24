@@ -219,6 +219,8 @@
     "note": "Todo se queda en tu dispositivo. Lasai no tiene cuenta ni servidor, y no recopila nada."
   },
   "common": {
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "saveFailed": "No se pudo guardar. Inténtalo de nuevo.",
+    "deleteFailed": "No se pudo borrar. Inténtalo de nuevo."
   }
 }

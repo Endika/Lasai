@@ -219,6 +219,8 @@
     "note": "Todo queda no teu dispositivo. Lasai non ten conta nin servidor, e non recompila nada."
   },
   "common": {
-    "close": "Pechar"
+    "close": "Pechar",
+    "saveFailed": "Non se puido gardar. Téntao de novo.",
+    "deleteFailed": "Non se puido borrar. Téntao de novo."
   }
 }

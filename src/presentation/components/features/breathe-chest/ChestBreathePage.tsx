@@ -423,6 +423,7 @@ function ChestResult({
   const { t } = useTranslation()
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
 
   const hasBreaths = Number.isFinite(analysis.breathsPerMin)
   const breaths = hasBreaths ? String(analysis.breathsPerMin) : '—'
@@ -434,6 +435,7 @@ function ChestResult({
   async function save() {
     if (saved || saving || !hasBreaths) return
     setSaving(true)
+    setSaveFailed(false)
     try {
       await saveHandler().execute({
         breathsPerMin: analysis.breathsPerMin,
@@ -442,6 +444,8 @@ function ChestResult({
         quality: analysis.breathingQuality,
       })
       setSaved(true)
+    } catch {
+      setSaveFailed(true)
     } finally {
       setSaving(false)
     }
@@ -476,6 +480,12 @@ function ChestResult({
       )}
 
       <p className="text-xs font-medium text-ink-soft">{t('chest.experimentalNote')}</p>
+
+      {saveFailed && (
+        <p role="alert" className="rounded-2xl bg-band-high-soft px-4 py-3 text-sm text-ink-soft">
+          {t('common.saveFailed')}
+        </p>
+      )}
 
       <div className="flex w-full flex-col gap-2 pt-2">
         <Button onClick={() => void save()} disabled={saved || saving || !hasBreaths}>

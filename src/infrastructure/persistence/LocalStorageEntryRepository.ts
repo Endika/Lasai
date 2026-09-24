@@ -39,6 +39,8 @@ export class LocalStorageEntryRepository implements IEntryRepository {
     }
   }
 
+  // Lets a quota/blocked setItem throw out to the caller (addX rejects): a
+  // save that didn't happen must never look like one that did.
   private write(store: EntryStore): void {
     const bounded: EntryStore = {
       checkIns: capNewest(store.checkIns, ENTRY_LIST_CAP),
@@ -48,11 +50,7 @@ export class LocalStorageEntryRepository implements IEntryRepository {
       motionReadings: capNewest(store.motionReadings, ENTRY_LIST_CAP),
       _schemaVersion: SCHEMA_VERSION,
     }
-    try {
-      this.storage.setItem(ENTRY_STORE_KEY, JSON.stringify(bounded))
-    } catch {
-      /* storage full / unavailable — non-fatal */
-    }
+    this.storage.setItem(ENTRY_STORE_KEY, JSON.stringify(bounded))
   }
 
   async addCheckIn(checkIn: CheckIn): Promise<void> {
@@ -71,6 +69,17 @@ export class LocalStorageEntryRepository implements IEntryRepository {
 
   async listJournal(): Promise<JournalEntry[]> {
     return this.read().journal
+  }
+
+  // One read-modify-write, one setItem: the check-in and its note either both
+  // land or neither does — a retry after a failure can't duplicate the check-in.
+  async addCheckInWithJournal(checkIn: CheckIn, journal: JournalEntry | null): Promise<void> {
+    const store = this.read()
+    this.write({
+      ...store,
+      checkIns: [...store.checkIns, checkIn],
+      journal: journal ? [...store.journal, journal] : store.journal,
+    })
   }
 
   async addSession(session: CalmSession): Promise<void> {
@@ -100,11 +109,8 @@ export class LocalStorageEntryRepository implements IEntryRepository {
     return this.read().motionReadings
   }
 
+  // Same contract as write(): a failed erasure must reject, not report success.
   async deleteAll(): Promise<void> {
-    try {
-      this.storage.removeItem(ENTRY_STORE_KEY)
-    } catch {
-      /* unavailable — non-fatal */
-    }
+    this.storage.removeItem(ENTRY_STORE_KEY)
   }
 }

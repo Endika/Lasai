@@ -26,6 +26,8 @@ export function HistoryPage() {
 
   const [history, setHistory] = useState<HistoryResult | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteFailed, setDeleteFailed] = useState(false)
 
   const load = useCallback(async () => {
     const handler = container.resolve<GetHistoryHandler>('getHistory')
@@ -49,10 +51,24 @@ export function HistoryPage() {
   }, [container])
 
   async function deleteAll() {
-    const handler = container.resolve<DeleteAllDataHandler>('deleteAllData')
-    await handler.execute()
+    if (deleting) return
+    setDeleting(true)
+    setDeleteFailed(false)
+    try {
+      const handler = container.resolve<DeleteAllDataHandler>('deleteAllData')
+      await handler.execute()
+      setConfirmDelete(false)
+      await load()
+    } catch {
+      setDeleteFailed(true)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  function closeDeleteModal() {
     setConfirmDelete(false)
-    await load()
+    setDeleteFailed(false)
   }
 
   const dateFmt = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'en', {
@@ -209,17 +225,25 @@ export function HistoryPage() {
         </button>
       </div>
 
-      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} labelledBy="delete-title">
+      <Modal open={confirmDelete} onClose={closeDeleteModal} labelledBy="delete-title">
         <div className="flex flex-col gap-4 pb-2">
           <h2 id="delete-title" className="text-lg font-semibold text-ink">
             {t('history.deleteConfirmTitle')}
           </h2>
           <p className="text-sm leading-relaxed text-ink-soft">{t('history.deleteConfirmBody')}</p>
+          {deleteFailed && (
+            <p
+              role="alert"
+              className="rounded-2xl bg-band-high-soft px-4 py-3 text-sm text-ink-soft"
+            >
+              {t('common.deleteFailed')}
+            </p>
+          )}
           <div className="flex flex-col gap-2">
-            <Button variant="soft" onClick={() => void deleteAll()}>
+            <Button variant="soft" onClick={() => void deleteAll()} disabled={deleting}>
               {t('history.deleteConfirm')}
             </Button>
-            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+            <Button variant="ghost" onClick={closeDeleteModal}>
               {t('history.deleteCancel')}
             </Button>
           </div>

@@ -6,9 +6,18 @@ import { ContainerProvider } from '@/presentation/context/ContainerProvider'
 import { buildContainer } from '@/shared/di/wiring'
 import { FakeMotionSource } from '@/infrastructure/motion/FakeMotionSource'
 import { TARGET_FPS, type MotionSample } from '@/domain/motion/dsp'
+import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEntryRepository'
+import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 import type { Container } from '@/shared/di/Container'
 import type { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
 import '@/presentation/i18n/config'
+
+/** A repo whose write path fails, like a full or blocked localStorage would. */
+class FailingMotionRepository extends InMemoryEntryRepository {
+  override async addMotionReading(): Promise<void> {
+    throw new Error('write failed')
+  }
+}
 
 const FPS = TARGET_FPS
 
@@ -88,6 +97,29 @@ describe('ChestBreathePage (audio-guided session with a fake motion source)', ()
     const history = await container.resolve<GetHistoryHandler>('getHistory').execute()
     expect(history.motionReadings).toHaveLength(1)
     expect(history.motionReadings[0]?.breathsPerMin).toBe(num)
+  })
+
+  it('never shows Saved when the write fails, and surfaces the failure', async () => {
+    const user = userEvent.setup()
+    const container = buildContainer({ inMemory: true })
+    container.register<IEntryRepository>('entryRepo', () => new FailingMotionRepository())
+    const source = new FakeMotionSource(chestSignal(), FPS)
+    renderWithContainer(
+      <ChestBreathePage onDone={() => {}} createSource={() => source} />,
+      container,
+    )
+
+    await selectOneMinute(user)
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    await act(async () => {
+      source.flush()
+    })
+    await screen.findByText('Your reading')
+
+    await user.click(screen.getByRole('button', { name: 'Save to history' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Couldn't save/i))
+    expect(screen.queryByRole('button', { name: 'Saved' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save to history' })).toBeEnabled()
   })
 
   it('requests permission on the start gesture and shows a clear message when denied', async () => {

@@ -5,9 +5,18 @@ import { MeasurePage } from '@/presentation/components/features/measure/MeasureP
 import { ContainerProvider } from '@/presentation/context/ContainerProvider'
 import { buildContainer } from '@/shared/di/wiring'
 import { FakeSignalSource } from '@/infrastructure/ppg/FakeSignalSource'
+import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEntryRepository'
+import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 import type { Container } from '@/shared/di/Container'
 import type { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
 import '@/presentation/i18n/config'
+
+/** A repo whose write path fails, like a full or blocked localStorage would. */
+class FailingReadingRepository extends InMemoryEntryRepository {
+  override async addReading(): Promise<void> {
+    throw new Error('write failed')
+  }
+}
 
 const FPS = 30
 
@@ -148,6 +157,26 @@ describe('MeasurePage (measure flow with a fake signal source)', () => {
     expect(history.readings).toHaveLength(1)
     expect(history.readings[0]?.rmssd).toBeNull()
     expect(history.readings[0]?.stressBand).toBeNull()
+  })
+
+  it('never shows Saved when the write fails, and surfaces the failure', async () => {
+    const user = userEvent.setup()
+    const container = buildContainer({ inMemory: true })
+    container.register<IEntryRepository>('entryRepo', () => new FailingReadingRepository())
+    const source = new FakeSignalSource(cleanSignal(60), FPS)
+    renderWithContainer(
+      <MeasurePage onCheckIn={() => {}} onDone={() => {}} createSource={() => source} />,
+      container,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    source.flush()
+    await waitFor(() => expect(screen.getByText('Your reading')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: 'Save to history' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Couldn't save/i))
+    expect(screen.queryByRole('button', { name: 'Saved' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save to history' })).toBeEnabled()
   })
 
   it('a dark/uncovered capture fails and hints to cover the lens', async () => {

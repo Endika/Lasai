@@ -31,6 +31,7 @@ export function MeasureResult({
   const container = useContainer()
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
 
   const { bpm, rmssd, hrvReliable } = assessment
   // A local band only for display; the persisted band is recomputed in the
@@ -40,6 +41,7 @@ export function MeasureResult({
   async function save() {
     if (saved || saving) return
     setSaving(true)
+    setSaveFailed(false)
     try {
       const handler = container.resolve<SaveHeartReadingHandler>('saveHeartReading')
       await handler.execute({
@@ -49,6 +51,8 @@ export function MeasureResult({
         quality: assessment.quality,
       })
       setSaved(true)
+    } catch {
+      setSaveFailed(true)
     } finally {
       setSaving(false)
     }
@@ -98,6 +102,12 @@ export function MeasureResult({
             {t('measure.goCheckIn')}
           </button>
         </div>
+      )}
+
+      {saveFailed && (
+        <p role="alert" className="rounded-2xl bg-band-high-soft px-4 py-3 text-sm text-ink-soft">
+          {t('common.saveFailed')}
+        </p>
       )}
 
       <div className="flex w-full flex-col gap-2 pt-2">

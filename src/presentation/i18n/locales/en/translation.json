@@ -219,6 +219,8 @@
     "note": "Everything stays on your device. Lasai has no account, no server, and collects nothing."
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "saveFailed": "Couldn't save. Try again.",
+    "deleteFailed": "Couldn't delete. Try again."
   }
 }
