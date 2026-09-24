@@ -3,7 +3,6 @@ import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 import { LocalStorageEntryRepository } from '@/infrastructure/persistence/LocalStorageEntryRepository'
 import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEntryRepository'
 import { SubmitCheckInHandler } from '@/application/handlers/SubmitCheckInHandler'
-import { AddJournalEntryHandler } from '@/application/handlers/AddJournalEntryHandler'
 import { LogCalmSessionHandler } from '@/application/handlers/LogCalmSessionHandler'
 import { SaveHeartReadingHandler } from '@/application/handlers/SaveHeartReadingHandler'
 import { SaveMotionReadingHandler } from '@/application/handlers/SaveMotionReadingHandler'
@@ -16,7 +15,6 @@ export function buildContainer(opts: { inMemory?: boolean } = {}): Container {
     opts.inMemory ? new InMemoryEntryRepository() : new LocalStorageEntryRepository(),
   )
   c.register('submitCheckIn', () => new SubmitCheckInHandler(c.resolve('entryRepo')))
-  c.register('addJournalEntry', () => new AddJournalEntryHandler(c.resolve('entryRepo')))
   c.register('logCalmSession', () => new LogCalmSessionHandler(c.resolve('entryRepo')))
   c.register('saveHeartReading', () => new SaveHeartReadingHandler(c.resolve('entryRepo')))
   c.register('saveMotionReading', () => new SaveMotionReadingHandler(c.resolve('entryRepo')))

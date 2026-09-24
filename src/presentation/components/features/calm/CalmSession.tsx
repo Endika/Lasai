@@ -35,6 +35,7 @@ export function CalmSession({ onHome }: { onHome: () => void }) {
   const [soundOn, setSoundOn] = useState(false)
 
   const [elapsed, setElapsed] = useState(0)
+  const [saveFailed, setSaveFailed] = useState(false)
   const startRef = useRef<number>(0)
   const totalSec = durationMin * 60
 
@@ -43,10 +44,13 @@ export function CalmSession({ onHome }: { onHome: () => void }) {
   const finish = useCallback(
     (ranSec: number) => {
       setStage('done')
+      setSaveFailed(false)
       const durationSec = Math.max(1, Math.round(ranSec))
       const handler = container.resolve<LogCalmSessionHandler>('logCalmSession')
+      // Never blocks the calm experience — the done screen shows regardless,
+      // just flags it if the session couldn't be logged.
       void handler.execute({ pattern, durationSec }).catch(() => {
-        /* logging is best-effort; never block the calm experience */
+        setSaveFailed(true)
       })
     },
     [container, pattern],
@@ -101,6 +105,11 @@ export function CalmSession({ onHome }: { onHome: () => void }) {
         </div>
         <h2 className="text-2xl font-semibold tracking-tight text-ink">{t('calm.doneTitle')}</h2>
         <p className="max-w-xs text-balance text-ink-soft">{t('calm.doneBody')}</p>
+        {saveFailed && (
+          <p role="alert" className="max-w-xs text-balance text-xs text-ink-faint">
+            {t('common.saveFailed')}
+          </p>
+        )}
         <div className="flex flex-col gap-3 pt-2">
           <Button onClick={() => setStage('setup')}>{t('calm.doneAgain')}</Button>
           <Button variant="ghost" onClick={onHome}>

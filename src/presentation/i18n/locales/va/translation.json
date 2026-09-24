@@ -219,6 +219,8 @@
     "note": "Tot es queda al teu dispositiu. Lasai no té compte ni servidor, i no recull res."
   },
   "common": {
-    "close": "Tancar"
+    "close": "Tancar",
+    "saveFailed": "No s'ha pogut guardar. Torna-ho a provar.",
+    "deleteFailed": "No s'ha pogut esborrar. Torna-ho a provar."
   }
 }

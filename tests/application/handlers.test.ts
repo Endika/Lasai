@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEntryRepository'
 import { SubmitCheckInHandler } from '@/application/handlers/SubmitCheckInHandler'
-import { AddJournalEntryHandler } from '@/application/handlers/AddJournalEntryHandler'
 import { LogCalmSessionHandler } from '@/application/handlers/LogCalmSessionHandler'
+import type { CheckIn } from '@/domain/entities/CheckIn'
+import type { JournalEntry } from '@/domain/entities/JournalEntry'
 import { SaveHeartReadingHandler } from '@/application/handlers/SaveHeartReadingHandler'
 import { SaveMotionReadingHandler } from '@/application/handlers/SaveMotionReadingHandler'
 import { GetHistoryHandler } from '@/application/handlers/GetHistoryHandler'
@@ -52,14 +53,31 @@ describe('SubmitCheckInHandler', () => {
       new SubmitCheckInHandler(repo).execute({ answers: [0, 1, 2] }),
     ).rejects.toBeTruthy()
   })
-})
 
-describe('AddJournalEntryHandler', () => {
-  it('stores a standalone note', async () => {
-    const repo = new InMemoryEntryRepository()
-    const entry = await new AddJournalEntryHandler(repo).execute({ text: 'a thought' })
-    expect(entry.checkInId).toBeNull()
-    expect((await repo.listJournal())[0]?.text).toBe('a thought')
+  it('a failed atomic write stores nothing, and a retry stores exactly one check-in + note', async () => {
+    /** Fails the check-in+journal write exactly once, then behaves normally. */
+    class FlakyOnceRepository extends InMemoryEntryRepository {
+      private failNext = true
+      override async addCheckInWithJournal(checkIn: CheckIn, journal: JournalEntry | null) {
+        if (this.failNext) {
+          this.failNext = false
+          throw new Error('write failed')
+        }
+        return super.addCheckInWithJournal(checkIn, journal)
+      }
+    }
+    const repo = new FlakyOnceRepository()
+    const handler = new SubmitCheckInHandler(repo)
+
+    await expect(handler.execute({ answers: ANSWERS, journalText: 'rough week' })).rejects.toThrow()
+    expect(await repo.listCheckIns()).toEqual([])
+    expect(await repo.listJournal()).toEqual([])
+
+    const checkIn = await handler.execute({ answers: ANSWERS, journalText: 'rough week' })
+    expect(await repo.listCheckIns()).toHaveLength(1)
+    const journal = await repo.listJournal()
+    expect(journal).toHaveLength(1)
+    expect(journal[0]?.checkInId).toBe(checkIn.id)
   })
 })
 

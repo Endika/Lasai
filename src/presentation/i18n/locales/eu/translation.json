@@ -219,6 +219,8 @@
     "note": "Dena zure gailuan geratzen da. Lasaik ez du konturik ez zerbitzaririk, eta ez du ezer biltzen."
   },
   "common": {
-    "close": "Itxi"
+    "close": "Itxi",
+    "saveFailed": "Ezin izan da gorde. Saiatu berriro.",
+    "deleteFailed": "Ezin izan da ezabatu. Saiatu berriro."
   }
 }

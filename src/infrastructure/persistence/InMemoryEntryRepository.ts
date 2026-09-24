@@ -38,6 +38,15 @@ export class InMemoryEntryRepository implements IEntryRepository {
     return structuredClone(this.journal)
   }
 
+  // Mirrors the atomic write in LocalStorageEntryRepository: both fields update
+  // together, or (on an override throwing before this runs) neither does.
+  async addCheckInWithJournal(checkIn: CheckIn, journal: JournalEntry | null): Promise<void> {
+    this.checkIns = capNewest([...this.checkIns, structuredClone(checkIn)], ENTRY_LIST_CAP)
+    if (journal) {
+      this.journal = capNewest([...this.journal, structuredClone(journal)], ENTRY_LIST_CAP)
+    }
+  }
+
   async addSession(session: CalmSession): Promise<void> {
     this.sessions = capNewest([...this.sessions, structuredClone(session)], ENTRY_LIST_CAP)
   }

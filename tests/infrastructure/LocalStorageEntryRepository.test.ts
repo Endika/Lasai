@@ -44,6 +44,37 @@ describe('LocalStorageEntryRepository', () => {
     expect((await repo2.listMotionReadings())[0]?.id).toBe(m.id)
   })
 
+  it('addCheckInWithJournal persists both in one atomic write', async () => {
+    const c = createCheckIn({ answers: ANSWERS })
+    const j = createJournalEntry({ text: 'a note', checkInId: c.id })
+    await repo.addCheckInWithJournal(c, j)
+    expect(await repo.listCheckIns()).toEqual([c])
+    expect(await repo.listJournal()).toEqual([j])
+  })
+
+  it('addCheckInWithJournal stores the check-in alone when there is no note', async () => {
+    const c = createCheckIn({ answers: ANSWERS })
+    await repo.addCheckInWithJournal(c, null)
+    expect(await repo.listCheckIns()).toEqual([c])
+    expect(await repo.listJournal()).toEqual([])
+  })
+
+  it('addCheckInWithJournal rejects and stores nothing when the write fails', async () => {
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('quota exceeded')
+      },
+      removeItem: () => {},
+    } as unknown as Storage
+    const failing = new LocalStorageEntryRepository(storage)
+    const c = createCheckIn({ answers: ANSWERS })
+    const j = createJournalEntry({ text: 'a note', checkInId: c.id })
+    await expect(failing.addCheckInWithJournal(c, j)).rejects.toThrow()
+    expect(await failing.listCheckIns()).toEqual([])
+    expect(await failing.listJournal()).toEqual([])
+  })
+
   it('migrates an old (pre-motion) blob: motionReadings defaults to empty', async () => {
     window.localStorage.setItem(
       ENTRY_STORE_KEY,
@@ -80,6 +111,59 @@ describe('LocalStorageEntryRepository', () => {
     expect(await repo.listSessions()).toEqual([])
   })
 
+  it('tolerates a throwing getItem (reads as empty, no throw, no write)', async () => {
+    const storage = {
+      getItem: () => {
+        throw new Error('storage unavailable')
+      },
+      setItem: () => {
+        throw new Error('reading must never write')
+      },
+      removeItem: () => {},
+    } as unknown as Storage
+    const throwing = new LocalStorageEntryRepository(storage)
+    await expect(throwing.listCheckIns()).resolves.toEqual([])
+  })
+
+  it('never writes to storage while only reading, missing or corrupt', async () => {
+    const map = new Map<string, string>()
+    const storage = {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: () => {
+        throw new Error('reading must never write')
+      },
+      removeItem: () => {},
+    } as unknown as Storage
+    const noWrite = new LocalStorageEntryRepository(storage)
+    await expect(noWrite.listCheckIns()).resolves.toEqual([])
+    map.set(ENTRY_STORE_KEY, 'not json')
+    await expect(noWrite.listJournal()).resolves.toEqual([])
+  })
+
+  it('rejects instead of claiming success when setItem fails', async () => {
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('quota exceeded')
+      },
+      removeItem: () => {},
+    } as unknown as Storage
+    const failing = new LocalStorageEntryRepository(storage)
+    await expect(failing.addCheckIn(createCheckIn({ answers: ANSWERS }))).rejects.toThrow()
+  })
+
+  it('rejects instead of claiming success when the erasure fails', async () => {
+    const storage = {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {
+        throw new Error('storage unavailable')
+      },
+    } as unknown as Storage
+    const failing = new LocalStorageEntryRepository(storage)
+    await expect(failing.deleteAll()).rejects.toThrow()
+  })
+
   it('tolerates a valid-JSON-but-wrong-shape blob and drops bad items', async () => {
     window.localStorage.setItem(
       ENTRY_STORE_KEY,
@@ -96,6 +180,55 @@ describe('LocalStorageEntryRepository', () => {
     expect(checkIns.map((c) => c.id)).toEqual(['ok'])
     expect(await repo.listJournal()).toEqual([])
     expect(await repo.listSessions()).toEqual([])
+  })
+
+  it('loads a literal snapshot of the current on-disk format back complete (format guard)', async () => {
+    // Pinned to today's shape (schema v3): tightening a zod schema or renaming
+    // a field without a migration must make this fail, not just the app.
+    const snapshot = {
+      checkIns: [
+        {
+          id: 'c1',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          answers: ANSWERS,
+          score: 20,
+          band: 'moderate',
+        },
+      ],
+      journal: [
+        { id: 'j1', createdAt: '2026-01-01T00:00:00.000Z', text: 'a note', checkInId: 'c1' },
+      ],
+      sessions: [
+        { id: 's1', createdAt: '2026-01-01T00:00:00.000Z', pattern: 'box', durationSec: 180 },
+      ],
+      readings: [
+        {
+          id: 'r1',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          bpm: 66,
+          rmssd: 38,
+          stressBand: 'moderate',
+          quality: 'good',
+        },
+      ],
+      motionReadings: [
+        {
+          id: 'm1',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          breathsPerMin: 12,
+          bcgBpm: 62,
+          quality: 0.7,
+        },
+      ],
+      _schemaVersion: 3,
+    }
+    window.localStorage.setItem(ENTRY_STORE_KEY, JSON.stringify(snapshot))
+
+    expect(await repo.listCheckIns()).toEqual(snapshot.checkIns)
+    expect(await repo.listJournal()).toEqual(snapshot.journal)
+    expect(await repo.listSessions()).toEqual(snapshot.sessions)
+    expect(await repo.listReadings()).toEqual(snapshot.readings)
+    expect(await repo.listMotionReadings()).toEqual(snapshot.motionReadings)
   })
 
   it('caps each list to the newest ENTRY_LIST_CAP items', async () => {

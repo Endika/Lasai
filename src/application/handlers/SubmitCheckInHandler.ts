@@ -15,13 +15,12 @@ export class SubmitCheckInHandler {
     const parsed = SubmitCheckInSchema.parse(input)
     const now = parsed.now ?? new Date().toISOString()
     const checkIn = createCheckIn({ answers: parsed.answers, now })
-    await this.repo.addCheckIn(checkIn)
 
     const text = parsed.journalText?.trim()
-    if (text) {
-      const entry = createJournalEntry({ text, checkInId: checkIn.id, now })
-      await this.repo.addJournal(entry)
-    }
+    const entry = text ? createJournalEntry({ text, checkInId: checkIn.id, now }) : null
+    // One atomic write: a failed attempt (and its retry) can never leave a
+    // check-in without its note, or store the check-in twice.
+    await this.repo.addCheckInWithJournal(checkIn, entry)
     return checkIn
   }
 }

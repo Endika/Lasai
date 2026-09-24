@@ -4,7 +4,16 @@ import userEvent from '@testing-library/user-event'
 import { ContainerProvider } from '@/presentation/context/ContainerProvider'
 import { CalmSession } from '@/presentation/components/features/calm/CalmSession'
 import { buildContainer } from '@/shared/di/wiring'
+import { InMemoryEntryRepository } from '@/infrastructure/persistence/InMemoryEntryRepository'
+import type { IEntryRepository } from '@/domain/repositories/IEntryRepository'
 import '@/presentation/i18n/config'
+
+/** A repo whose write path fails, like a full or blocked localStorage would. */
+class FailingSessionRepository extends InMemoryEntryRepository {
+  override async addSession(): Promise<void> {
+    throw new Error('write failed')
+  }
+}
 
 function renderCalm() {
   const container = buildContainer({ inMemory: true })
@@ -43,6 +52,25 @@ describe('CalmSession', () => {
     const sessions = await repo.listSessions()
     expect(sessions).toHaveLength(1)
     expect(sessions[0]?.pattern).toBe('box')
+  })
+
+  it('reaches the done screen and surfaces the failure when logging fails', async () => {
+    const user = userEvent.setup()
+    const container = buildContainer({ inMemory: true })
+    container.register<IEntryRepository>('entryRepo', () => new FailingSessionRepository())
+    render(
+      <ContainerProvider container={container}>
+        <CalmSession onHome={() => {}} />
+      </ContainerProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Begin' }))
+    await screen.findByText('Breathe in')
+    await user.click(screen.getByRole('button', { name: 'Finish' }))
+
+    // The done screen still shows — logging failure never blocks it.
+    expect(await screen.findByText('Well done')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Couldn't save/i)
   })
 
   it('keeps ambient sound off by default and toggles it', async () => {
