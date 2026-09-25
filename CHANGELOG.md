@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1](https://github.com/Endika/Lasai/compare/v0.14.0...v0.14.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* never report an entry as saved when it wasn't ([1f428ad](https://github.com/Endika/Lasai/commit/1f428adbe53ad7b5009b92caa959540a4e0b772c))
+
 ## [0.14.0](https://github.com/Endika/Lasai/compare/v0.13.0...v0.14.0) (2026-09-16)
 
 
