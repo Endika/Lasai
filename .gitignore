@@ -20,5 +20,4 @@ Thumbs.db
 
 *.local
 
-# Internal planning notes (specs/plans) live outside the repo (../Lasai-notes)
 docs/superpowers/
