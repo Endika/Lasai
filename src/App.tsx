@@ -12,7 +12,7 @@ import { PpgLabPage } from '@/presentation/components/features/ppg/PpgLabPage'
 import { ChestBreathePage } from '@/presentation/components/features/breathe-chest/ChestBreathePage'
 
 // 'ppg-lab' is a hidden diagnostic route reachable only via ?view=… and is
-// intentionally NOT linked from Home or any menu (a SPIKE).
+// intentionally NOT linked from Home or any menu.
 type View = 'home' | 'calm' | 'checkin' | 'history' | 'measure' | 'breathe-chest' | 'ppg-lab'
 
 const VIEWS: readonly View[] = [
