@@ -26,6 +26,13 @@ tracking, and no backend: nothing you do ever leaves your phone.
 
 ## Features
 
+- **Calm now:** a guided breathing session (box or 4-7-8 breathing, 1, 3 or 5
+  minutes) with an optional ambient sound.
+- **Stress check-in:** the ten questions of the Perceived Stress Scale (PSS-10),
+  scored out of 40, with an optional private note. It is for self-reflection, not a
+  diagnosis.
+- **Your history:** your check-ins, sessions and readings over time, with a
+  perceived-stress trend, and one button to delete all of it.
 - **Measure my pulse (experimental):** an on-device camera reading that estimates
   your heart rate, and a rough HRV-based stress band only when the signal is clean
   enough. Frames are processed on your device and never stored or sent. It is not a
@@ -42,7 +49,7 @@ tracking, and no backend: nothing you do ever leaves your phone.
 - React 19 + Vite + TypeScript (strict)
 - Tailwind CSS v4
 - Installable PWA (works fully offline)
-- i18next (English and Spanish to start)
+- i18next (English, Spanish, Basque, Galician, Catalan and Valencian)
 - Hexagonal architecture (`domain` / `application` / `infrastructure` / `presentation`)
 
 ## Development
@@ -63,7 +70,7 @@ npm run test:run    # Vitest
 npm run format      # Prettier (write)
 ```
 
-Regenerate the placeholder PWA icons:
+Regenerate the PWA icons:
 
 ```bash
 npm run generate-icons
