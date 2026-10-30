@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.2](https://github.com/Endika/Lasai/compare/v0.14.1...v0.14.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* **deps:** bump fast-uri to 3.1.9 and serialize-javascript to 7.1.3 ([90d42d9](https://github.com/Endika/Lasai/commit/90d42d9833142f0ad6f49211136f77d2f9cbc2b3))
+
 ## [0.14.1](https://github.com/Endika/Lasai/compare/v0.14.0...v0.14.1) (2026-09-25)
 
 
