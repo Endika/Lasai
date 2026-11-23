@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.3](https://github.com/Endika/Lasai/compare/v0.14.2...v0.14.3) (2026-11-23)
+
+
+### Bug Fixes
+
+* **pwa:** precache the app again so installed apps update ([830fb63](https://github.com/Endika/Lasai/commit/830fb638d6ba0d054feec5dc7ce4d28078d1ff2c))
+
 ## [0.14.2](https://github.com/Endika/Lasai/compare/v0.14.1...v0.14.2) (2026-10-30)
 
 
